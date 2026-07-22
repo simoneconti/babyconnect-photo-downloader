@@ -264,7 +264,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="11";
+  var BM_VERSION="12";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -272,7 +272,7 @@ function BOOKMARKLET(){
   var CONC={discovery:5, download:5};        // fisso per tutti: nessuna scelta da fare
   var RECHECK_DAYS=7;                        // ricontrolla gli ultimi giorni (upload in ritardo)
   var ZIP_MAX_WEEKDAYS=40;                   // limite di sicurezza in modalità ZIP (~2 mesi): niente cartella su disco, tutto resta in memoria
-  var STATUS_URL="https://simoneconti.github.io/babyconnect-photo-downloader/status.json";
+  var STATUS_URL="https://simoneconti.github.io/babyconnect-photo-downloader/status.json"; // fallback: la landing page lo sovrascrive con il proprio dominio prima di generare il link, vedi IIFE finale
 
   // interruttore remoto: controllato ad ogni lancio, PRIMA di toccare BabyConnect.
   // fail-closed: se il controllo stesso fallisce (rete, file assente, JSON non valido),
@@ -931,6 +931,14 @@ function BOOKMARKLET(){
 // serializza il bookmarklet nell'href del pulsante (niente problemi di escaping)
 (function(){
   var code="("+BOOKMARKLET.toString()+")();";
+  // ogni copia di questa pagina (dominio nginx, GitHub Pages, ecc.) genera un
+  // bookmarklet che controlla il PROPRIO status.json, non uno fisso: risolto
+  // qui (al momento in cui la landing page genera il link), non dentro al
+  // bookmarklet — lì un URL relativo risolverebbe contro app.babyconnect.it,
+  // non contro il dominio dello strumento. new URL() gestisce da sola anche
+  // i deploy sotto sottopercorso (es. i "project site" di GitHub Pages).
+  var statusUrl=new URL("status.json", location.href).href;
+  code=code.replace(/(STATUS_URL\s*=\s*")[^"]*(")/, "$1"+statusUrl+"$2");
   document.getElementById("bm").href="javascript:"+encodeURIComponent(code);
   document.getElementById("bm").addEventListener("click", function(e){
     e.preventDefault();
