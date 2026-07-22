@@ -4,7 +4,7 @@ Strumento gratuito per genitori de **"Il Casello dei Piccoli"**: scarica in
 automatico le foto dei figli dal portale scolastico [BabyConnect](https://app.babyconnect.it),
 organizzate per data e con **data corretta nei metadati EXIF**.
 
-Sito live: https://babyconnect-photo-downloader.simoneconti.dev
+Sito live: https://simoneconti.github.io/babyconnect-photo-downloader/
 
 ## Cos'è
 
@@ -46,8 +46,9 @@ documentati in [CLAUDE.md](CLAUDE.md).
 
 ## Deploy
 
-Nessuna pipeline: copia manuale di `index.html` e `status.json` nel root
-nginx del sito (vedi sezione Infrastruttura in [CLAUDE.md](CLAUDE.md)).
+Pubblicato in parallelo su GitHub Pages (automatico al push su `master`) e su
+un server nginx personale (copia manuale, vedi sezione Infrastruttura in
+[CLAUDE.md](CLAUDE.md)).
 
 ## Autore
 

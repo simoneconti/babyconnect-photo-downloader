@@ -179,11 +179,10 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
 
 ## Infrastruttura
 
-- **Sito (landing page)**: `https://babyconnect-photo-downloader.simoneconti.dev`,
-  servito da nginx (Let's Encrypt/Certbot), root statico in
-  `/var/www/babyconnect-photo-downloader/`, file principale `index.html`
-  (questo stesso file, copiato così com'è). Deploy: nessuna pipeline, copia
-  manuale del file (`scp`/`sudo cp`) nel root nginx.
+- **Sito (landing page)**: servito da un server nginx personale (Let's
+  Encrypt/Certbot) su un dominio custom, root statico con file principale
+  `index.html` (questo stesso file, copiato così com'è). Deploy: nessuna
+  pipeline, copia manuale del file (`scp`/`sudo cp`) nel root nginx.
 - **GitHub Pages (v11+)**: repo `simoneconti/babyconnect-photo-downloader` su
   GitHub, pubblicato anche su
   `https://simoneconti.github.io/babyconnect-photo-downloader/` (Settings →
