@@ -267,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="17";
+  var BM_VERSION="20";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -500,7 +500,14 @@ function BOOKMARKLET(){
   // ── discovery: id gallerie di un giorno ──────────────────────────────────────
   async function idsForDay(d){
     var url="/Parent/ActivityTimeline/"+S.childId+"/"+d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
-    var html=await getText(url);
+    // header XHR: verificato che da loggati la risposta resta identica byte per byte (vedi CLAUDE.md).
+    // Senza questo header, una sessione scaduta fa rispondere il server con un 302 verso il login,
+    // che fetch() segue da solo ottenendo 200 OK con l'HTML del login: sembrerebbe una richiesta
+    // riuscita con "zero attività" quel giorno, e verrebbe segnata per sempre come tale nel promemoria
+    // (verificato col Network tab: 302 -> /Account/Login). Con l'header, il server risponde 401 invece
+    // di reindirizzare (come già succede per DettaglioAttivitaEducativa), e getText() lo tratta
+    // correttamente come fallimento da ritentare.
+    var html=await getText(url,{headers:xhrHeaders()});
     if(html===null) return {ok:false, ids:[]}; // richiesta fallita: NON è lo stesso di "nessuna attività quel giorno"
     var ids={},out=[],re=/(?:showDetails|openGallery)\((\d+)\)/g,m;
     while((m=re.exec(html))){ if(!ids[m[1]]){ids[m[1]]=1;out.push(m[1]);} }
@@ -624,6 +631,7 @@ function BOOKMARKLET(){
       for(var z=0;z<arr.length;z++){ if(!idSet[arr[z]]){idSet[arr[z]]=1;ids2.push(arr[z]);} }
     }
     log("✓ "+ids2.length+" attività con foto nel periodo.");
+    if(S.stop){ await saveManifest(); return; } // "Fermato — chiudi" già mostrato dal pulsante Ferma: non proseguire né sovrascriverlo
     if(ids2.length===0){
       if(toScan.length>0 && falliti===toScan.length){
         log("Nessuna attività trovata, ma solo perché l'analisi dei giorni non ha funzionato (vedi avviso sopra) — non vuol dire che non ci fossero foto.");
@@ -661,6 +669,8 @@ function BOOKMARKLET(){
       setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
       log("✓ ZIP scaricato nella cartella Download.");
     }
+
+    if(S.stop) return; // "Fermato — chiudi" già mostrato dal pulsante Ferma: non sovrascriverlo con lo stato finale
 
     log("");
     var downloadHardFail=(ids2.length>0 && fallitiDownload===ids2.length);
@@ -841,7 +851,7 @@ function BOOKMARKLET(){
       '</div>'+
       '</div>'
     ));
-    config.appendChild(el('<div style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così.)</span></div>'));
+    config.appendChild(el('<div style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
     config.appendChild(el('<button id="_bcGo" disabled style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:default;opacity:.5">Scegli cartella e avvia</button>'));
     config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
     card.appendChild(config);
@@ -883,6 +893,7 @@ function BOOKMARKLET(){
     };
     document.getElementById("_bcGo").onclick=function(){
       var b=this; b.disabled=true; b.style.opacity=".5";
+      if(!S.childId){ alert("Manca l'id del bambino: scrivilo nel campo qui sopra prima di continuare."); b.disabled=false; b.style.opacity="1"; return; }
       var fromIso=S.fromPicker.getIso(), toIso=S.toPicker.getIso();
       var from=fromIso?new Date(fromIso+"T00:00:00"):null;
       var to=toIso?new Date(toIso+"T23:59:59"):null;
@@ -967,6 +978,8 @@ function BOOKMARKLET(){
         S.childId=this.value.replace(/\D/g,"")||null;
         var datesEl=document.getElementById("_bcDates");
         if(datesEl) datesEl.style.display = S.childId ? "block" : "none";
+        var goBtn=document.getElementById("_bcGo");
+        if(goBtn){ goBtn.disabled=!S.childId; goBtn.style.cursor=S.childId?"pointer":"default"; goBtn.style.opacity=S.childId?"1":".5"; }
       };},0);
     }
   }
@@ -1013,7 +1026,7 @@ function BOOKMARKLET(){
     S.childId=res.id;
     renderWho(res);
     var goBtn=document.getElementById("_bcGo");
-    if(goBtn){ goBtn.disabled=false; goBtn.style.cursor="pointer"; goBtn.style.opacity="1"; }
+    if(goBtn){ var ok=!!S.childId; goBtn.disabled=!ok; goBtn.style.cursor=ok?"pointer":"default"; goBtn.style.opacity=ok?"1":".5"; }
 
     log("⏳ Preparo gli strumenti…");
     try{ await loadScript(CDN_PIEXIF); log("✓ Scrittura data nelle foto pronta."); }catch(e){ log("⚠ Data EXIF non disponibile (continuo lo stesso)."); }

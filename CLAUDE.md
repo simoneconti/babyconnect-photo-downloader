@@ -119,6 +119,23 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
   trattato come "giorno senza foto" e MAI PIÙ ritentato — bug subdolo e
   silenzioso, l'utente vedeva "fatto" con foto mancanti senza nessun errore
   visibile. Se si tocca questa parte, mantenere la distinzione.
+  **Corollario verificato in v19 (Network tab, sessione scaduta reale)**: senza
+  l'header `x-requested-with: XMLHttpRequest`, la pagina-giorno con sessione
+  scaduta risponde `302 → /Account/Login`; `fetch()` segue il redirect da solo
+  e ottiene `200 OK` con l'HTML del login, che `getText()` considera una
+  risposta riuscita (`r.ok===true`) — il giorno veniva quindi marcato
+  silenziosamente come "analizzato, zero attività" **per sempre**, aggirando
+  del tutto il fix del bug sopra. `DettaglioAttivitaEducativa` non ha questo
+  problema perché manda già quell'header (il server risponde 401 invece di
+  reindirizzare). Fix: `idsForDay()` ora manda lo stesso header — verificato
+  nel CLAUDE.md (sezione "Come funziona il portale") che da loggati la risposta
+  resta identica byte per byte, quindi il fix è sicuro anche nel caso normale.
+  **Non esteso a `detectChildId()`** (chiama `/Parent/ActivityTimeline` senza
+  parametri, una rotta diversa mai testata con questo header): lì il
+  fallimento è già visibile subito (schermata "non riconosco il bambino" con
+  inserimento manuale dell'id), niente promemoria da corrompere silenziosamente
+  — rischio di rompere il riconoscimento normale non giustificato senza prima
+  verificare il comportamento di quella rotta specifica.
 - **Naming file piatto**: `AAAA-MM-GG - NomeAttività - nomefileoriginale.ext`,
   tutti nella stessa cartella, senza sottocartelle (richiesta esplicita).
 - **Modalità cartella vs ZIP**: `window.showDirectoryPicker` (Chrome/Edge)
