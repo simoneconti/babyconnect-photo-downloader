@@ -43,15 +43,9 @@
   @keyframes wiggle{0%,85%,100%{transform:translateX(0) rotate(0)}88%{transform:translateX(-3px) rotate(-2deg)}91%{transform:translateX(3px) rotate(2deg)}94%{transform:translateX(-2px) rotate(-1deg)}}
 
   /* donazioni */
-  .donate{max-width:520px;margin:40px auto 0;text-align:center;padding:26px;background:var(--card);border-radius:22px;border:1px solid var(--line);box-shadow:0 3px 16px rgba(60,30,80,.05)}
-  .donate h3{font-size:1.05rem;margin-bottom:6px}
-  .donate p{font-size:.9rem;color:var(--ink-soft);margin-bottom:18px}
-  .donate-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-  .donate-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#F7F5FD;border:1px solid var(--line);border-radius:14px;padding:12px 10px;text-decoration:none;color:var(--ink);font-weight:700;transition:transform .15s,background .15s;flex:1 1 0;max-width:150px;text-align:center}
-  .donate-btn:hover{background:#FFF0F4;transform:translateY(-2px)}
-  .donate-btn .em{font-size:1.4rem}
-  .donate-btn .price{font-size:.85rem;color:var(--pink)}
-  .donate-btn .lbl{font-size:.72rem;color:var(--ink-soft);font-weight:600}
+  .donate-line{max-width:520px;margin:40px auto 0;text-align:center;font-size:.88rem;color:var(--ink-soft)}
+  .donate-line a{color:var(--pink);font-weight:700;text-decoration:none}
+  .donate-line a:hover{text-decoration:underline}
 
   /* steps */
   .steps{margin:50px 0 10px}
@@ -209,17 +203,7 @@
     </details>
   </section>
 
-  <!-- donazioni disattivate temporaneamente, da rimettere più avanti
-  <div class="donate">
-    <h3>☕ Ti è stato utile?</h3>
-    <p>Questo strumento è e resterà sempre gratuito. Se ti ha risparmiato del tempo e ti va di ringraziare con un piccolo gesto, è benvenuto — ma non è richiesto in nessun modo.</p>
-    <div class="donate-row">
-      <a class="donate-btn" href="https://paypal.me/simoneconti84/1EUR" target="_blank" rel="noopener"><span class="em">☕</span><span class="price">1€</span><span class="lbl">Caffè</span></a>
-      <a class="donate-btn" href="https://paypal.me/simoneconti84/2EUR" target="_blank" rel="noopener"><span class="em">🥛</span><span class="price">2€</span><span class="lbl">Cappuccino di soia</span></a>
-      <a class="donate-btn" href="https://paypal.me/simoneconti84/3EUR" target="_blank" rel="noopener"><span class="em">🍊</span><span class="price">3€</span><span class="lbl">Spremuta d'arancia</span></a>
-    </div>
-  </div>
-  -->
+  <p class="donate-line">Questo strumento è e resterà sempre gratuito — se ti va di ringraziare, <a href="https://paypal.me/simoneconti84/1.50EUR" target="_blank" rel="noopener">offrimi un cappuccino di soia 🥛</a></p>
 
 </main>
 
