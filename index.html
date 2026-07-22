@@ -267,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="15";
+  var BM_VERSION="16";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -550,7 +550,12 @@ function BOOKMARKLET(){
         log("📁 Scegli la cartella dove salvare le foto…");
         S.fsaDir=await window.showDirectoryPicker({mode:"readwrite",startIn:"pictures",id:"babyconnect-foto"});
         log("✓ Salvo direttamente nella cartella scelta.");
-      }catch(e){ log("  (nessuna cartella scelta)"); finish("error"); return; }
+      }catch(e){
+        if(e && e.name==="AbortError"){ log("  (nessuna cartella scelta)"); }
+        else{ log("⚠ Il browser ha rifiutato questa cartella"+(e&&e.message?" ("+e.message+")":"")+". Alcune cartelle (es. Immagini, Documenti, Desktop presi per intero) non si possono scegliere direttamente: crea o scegli una sottocartella al loro interno, dedicata solo a queste foto, e riprova."); }
+        backToConfig();
+        return;
+      }
     }
     if(!S.fsaDir){
       if(typeof JSZip==="undefined"){ log("⚠ Questo browser non permette il salvataggio in cartella e lo ZIP non è disponibile. Usa Chrome o Edge."); finish("error"); return; }
@@ -632,6 +637,16 @@ function BOOKMARKLET(){
     log("");
     log("🎉 Fatto! "+S.total+" foto nuove salvate"+(S.skipped?", "+S.skipped+" già presenti saltate.":"."));
     finish("done");
+  }
+
+  // torna alla schermata di configurazione dopo un errore recuperabile (es. cartella
+  // rifiutata dal browser), invece di lasciare l'utente bloccato su "Chiudi e riprova"
+  // (quel pulsante chiude soltanto la finestra, non ritenta nulla).
+  function backToConfig(){
+    S.running=false; S.fsaDir=null; S.zip=null;
+    showPanel("config");
+    var goBtn=document.getElementById("_bcGo");
+    if(goBtn){ goBtn.disabled=false; goBtn.style.cursor="pointer"; goBtn.style.opacity="1"; }
   }
 
   function finish(status){
