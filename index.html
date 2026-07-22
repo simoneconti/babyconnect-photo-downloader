@@ -624,7 +624,16 @@ function BOOKMARKLET(){
       for(var z=0;z<arr.length;z++){ if(!idSet[arr[z]]){idSet[arr[z]]=1;ids2.push(arr[z]);} }
     }
     log("✓ "+ids2.length+" attività con foto nel periodo.");
-    if(ids2.length===0){ log("Nessuna foto trovata."); await saveManifest(); finish("done"); return; }
+    if(ids2.length===0){
+      if(toScan.length>0 && falliti===toScan.length){
+        log("Nessuna attività trovata, ma solo perché l'analisi dei giorni non ha funzionato (vedi avviso sopra) — non vuol dire che non ci fossero foto.");
+        await saveManifest(); finish("error");
+      }else{
+        log("Nessuna foto trovata.");
+        await saveManifest(); finish("done");
+      }
+      return;
+    }
 
     // 6) DOWNLOAD
     log("⬇ Scarico le foto…");
@@ -654,8 +663,18 @@ function BOOKMARKLET(){
     }
 
     log("");
-    log("🎉 Fatto! "+S.total+" foto nuove salvate"+(S.skipped?", "+S.skipped+" già presenti saltate.":"."));
-    finish("done");
+    var downloadHardFail=(ids2.length>0 && fallitiDownload===ids2.length);
+    var hadFailures=(falliti>0)||(fallitiDownload>0);
+    if(downloadHardFail){
+      log("⚠ Download non riuscito: nessuna foto nuova salvata a causa dei problemi indicati sopra.");
+      finish("error");
+    }else if(hadFailures){
+      log("⚠ Fatto, ma con qualche problema: "+S.total+" foto nuove salvate"+(S.skipped?", "+S.skipped+" già presenti saltate.":".")+" Alcuni giorni o attività non hanno risposto (vedi avvisi sopra) e verranno ritentati rilanciando lo strumento.");
+      finish("warn");
+    }else{
+      log("🎉 Fatto! "+S.total+" foto nuove salvate"+(S.skipped?", "+S.skipped+" già presenti saltate.":"."));
+      finish("done");
+    }
   }
 
   // torna alla schermata di configurazione dopo un errore recuperabile (es. cartella
@@ -669,17 +688,21 @@ function BOOKMARKLET(){
   }
 
   function finish(status){
-    // status: "done" (completato), "stopped" (fermato dal genitore), "error" (annullato/non disponibile)
+    // status: "done" (completato senza problemi), "warn" (completato ma con
+    // giorni/attività falliti, da ritentare), "stopped" (fermato dal genitore),
+    // "error" (fallimento totale, niente di nuovo salvato)
     S.running=false;
     var btn=document.getElementById("_bcStop");
     if(btn){
       if(status==="done"){ btn.textContent="✓ Tutto fatto, chiudi"; btn.style.background="#0FB5A6"; btn.style.color="#fff"; }
+      else if(status==="warn"){ btn.textContent="⚠ Fatto, con qualche problema — chiudi"; btn.style.background="#F5A524"; btn.style.color="#fff"; }
       else if(status==="stopped"){ btn.textContent="Fermato — chiudi"; }
       else { btn.textContent="Chiudi e riprova"; }
       btn.onclick=function(){ if(ROOT_EL) ROOT_EL.remove(); };
     }
     // fermiamo lo spinner e lo shimmer: il lavoro è finito, non deve sembrare ancora in corso
-    var spin=document.querySelector("#_bcProgLab .spinner"); if(spin) spin.outerHTML = status==="done" ? "✓ " : "⏹ ";
+    var spin=document.querySelector("#_bcProgLab .spinner");
+    if(spin) spin.outerHTML = status==="done" ? "✓ " : (status==="warn" ? "⚠ " : "⏹ ");
     var shine=document.querySelector(".prog-track .shine"); if(shine) shine.style.display="none";
     if(progTick){ clearInterval(progTick); progTick=null; }
   }
