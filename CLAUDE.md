@@ -13,6 +13,16 @@ Autore/manutentore: Simone Conti (papà di Sole, iscritta al Casello dei Piccoli
 
 ---
 
+## Regola su git: nessuna operazione automatica
+
+**Non eseguire mai comandi git in autonomia** — niente `git add`, `git commit`,
+`git push`, niente di niente. Quella parte è **manuale**, la fa sempre e solo
+l'utente. Puoi leggere lo stato del repo (`git status`, `git diff`, `git log`)
+per capire cosa è cambiato, ma non modificare mai la history o il remote senza
+che sia l'utente stesso a farlo.
+
+---
+
 ## Come funziona il portale (reverse-engineered)
 
 BabyConnect non ha un'API JSON pubblica leggera per il portale web. Ci sono due
