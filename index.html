@@ -267,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="16";
+  var BM_VERSION="17";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -509,7 +509,7 @@ function BOOKMARKLET(){
 
   // ── download di un'attività: titolo + foto full-res in un'unica chiamata ──────
   async function grabActivity(id){
-    var html=await getText("/Parent/ActivityTimeline/DettaglioAttivitaEducativa/"+id,{headers:xhrHeaders()}); if(!html) return;
+    var html=await getText("/Parent/ActivityTimeline/DettaglioAttivitaEducativa/"+id,{headers:xhrHeaders()}); if(!html) return false;
     var title="", imgs=[];
     try{
       var doc=new DOMParser().parseFromString(html,"text/html");
@@ -518,13 +518,14 @@ function BOOKMARKLET(){
     }catch(e){}
     if(!imgs.length){ imgs=html.match(/resources\/Routines\/[^"'\s)\\<>]+\.(?:jpe?g|png|gif|webp|mp4|mov|m4v|webm)/gi)||[]; }
     for(var i=0;i<imgs.length;i++){
-      if(S.stop) return;
+      if(S.stop) return true;
       var u="/"+imgs[i].replace(/^\/+/,"");
       var name=targetName(u,title);
       if(S.seen[name]) continue; S.seen[name]=1;
       if(S.stato.savedPhotos[name] || await fileExists(name)){ S.stato.savedPhotos[name]=1; S.skipped++; setCount(); continue; }
       try{ await saveImage(u,name); }catch(e){ log("  ⚠ "+name+": "+e.message); }
     }
+    return true;
   }
   async function saveImage(u,name){
     var res=await fetch(u,{credentials:"include"}); if(!res.ok) throw new Error("HTTP "+res.status);
@@ -599,7 +600,13 @@ function BOOKMARKLET(){
         var etaMs=avg*(tot-done);
         prog("Giorni analizzati",done,tot,etaMs);
       });
-      if(falliti>0) log("⚠ "+falliti+" giorni non hanno risposto e verranno riprovati al prossimo lancio (non sono stati segnati come analizzati).");
+      if(falliti>0){
+        if(falliti===toScan.length){
+          log("⚠ Nessuno dei "+falliti+" giorni analizzati ha risposto. La causa più probabile è che l'accesso a BabyConnect sia scaduto durante l'attesa: apri di nuovo app.babyconnect.it, controlla di essere ancora collegato (rifai l'accesso se necessario), poi rilancia lo strumento — quello già trovato finora resta salvato, si riparte da dove ci si era fermati.");
+        }else{
+          log("⚠ "+falliti+" giorni su "+toScan.length+" non hanno risposto e verranno riprovati al prossimo lancio. Se capita spesso, probabilmente l'accesso a BabyConnect è scaduto: controlla di essere ancora collegato.");
+        }
+      }
       await saveManifest();
     }else{
       log("↺ Niente di nuovo da analizzare: uso il promemoria.");
@@ -617,11 +624,18 @@ function BOOKMARKLET(){
     // 6) DOWNLOAD
     log("⬇ Scarico le foto…");
     prog("Attività completate",0,ids2.length,null);
-    var t1=Date.now();
-    await pool(ids2,CONC.download,async function(id){ await grabActivity(id); },function(done,tot){
+    var t1=Date.now(), fallitiDownload=0;
+    await pool(ids2,CONC.download,async function(id){ var ok=await grabActivity(id); if(!ok) fallitiDownload++; },function(done,tot){
       var avg=(Date.now()-t1)/done, etaMs=avg*(tot-done);
       prog("Attività completate",done,tot,etaMs);
     });
+    if(fallitiDownload>0){
+      if(fallitiDownload===ids2.length){
+        log("⚠ Nessuna delle "+fallitiDownload+" attività ha risposto durante il download. La causa più probabile è che l'accesso a BabyConnect sia scaduto: apri di nuovo app.babyconnect.it, controlla di essere ancora collegato (rifai l'accesso se necessario), poi rilancia lo strumento — le foto già scaricate restano salvate.");
+      }else{
+        log("⚠ "+fallitiDownload+" attività su "+ids2.length+" non hanno risposto e verranno ritentate rilanciando lo strumento. Se capita spesso, probabilmente l'accesso a BabyConnect è scaduto: controlla di essere ancora collegato.");
+      }
+    }
     await saveManifest();
 
     // 7) ZIP finale
@@ -799,7 +813,7 @@ function BOOKMARKLET(){
       '</div>'+
       '</div>'
     ));
-    config.appendChild(el('<p style="font-size:.78rem;color:#8B80AE;background:#F7F5FD;border-radius:9px;padding:8px 10px;margin-bottom:10px">📁 Al passo dopo ti verrà chiesto di scegliere una cartella: scegline una <b>vuota</b>, dedicata solo a queste foto. Lo strumento leggerà e scriverà <b>solo lì dentro</b>, mai altrove sul tuo computer.</p>'));
+    config.appendChild(el('<div style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così.)</span></div>'));
     config.appendChild(el('<button id="_bcGo" disabled style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:default;opacity:.5">Scegli cartella e avvia</button>'));
     config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
     card.appendChild(config);
