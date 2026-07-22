@@ -543,20 +543,25 @@ function BOOKMARKLET(){
   // ── flusso principale ────────────────────────────────────────────────────────
   async function start(cfg){
     S.running=true; S.stop=false;
-    showPanel("progress");
 
-    // 1) destinazione
+    // 1) destinazione — niente showPanel("progress") prima di qui: il picker nativo della
+    // cartella è un dialog di sistema, e se il pannello cambia mentre è aperto sembra un
+    // glitch (il cambio avviene "sotto" al dialog). Si passa al pannello progresso solo
+    // dopo che il dialog si è chiuso (scelta fatta, annullata o rifiutata).
     if(window.showDirectoryPicker){
       try{
-        log("📁 Scegli la cartella dove salvare le foto…");
         S.fsaDir=await window.showDirectoryPicker({mode:"readwrite",startIn:"pictures",id:"babyconnect-foto"});
+        showPanel("progress");
         log("✓ Salvo direttamente nella cartella scelta.");
       }catch(e){
+        showPanel("progress");
         if(e && e.name==="AbortError"){ log("  (nessuna cartella scelta)"); }
         else{ log("⚠ Il browser ha rifiutato questa cartella"+(e&&e.message?" ("+e.message+")":"")+". Alcune cartelle (es. Immagini, Documenti, Desktop presi per intero) non si possono scegliere direttamente: crea o scegli una sottocartella al loro interno, dedicata solo a queste foto, e riprova."); }
         backToConfig();
         return;
       }
+    }else{
+      showPanel("progress");
     }
     if(!S.fsaDir){
       if(typeof JSZip==="undefined"){ log("⚠ Questo browser non permette il salvataggio in cartella e lo ZIP non è disponibile. Usa Chrome o Edge."); finish("error"); return; }
