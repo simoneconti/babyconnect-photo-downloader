@@ -146,24 +146,24 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
   **URL non fisso**: `STATUS_URL` dentro `BOOKMARKLET()` è solo un fallback.
   Il valore vero viene calcolato nell'IIFE finale della landing page con
   `new URL("status.json", location.href).href` e iniettato nel codice
-  serializzato prima di generare l'`href` del bookmarklet — così ogni copia
-  della pagina (dominio nginx, GitHub Pages, un domani un altro) produce un
-  bookmarklet che controlla il **proprio** `status.json`, non uno condiviso.
+  serializzato prima di generare l'`href` del bookmarklet — così il
+  bookmarklet controlla sempre il `status.json` pubblicato insieme alla
+  pagina da cui è stato trascinato, senza un URL fisso da tenere allineato a
+  mano.
   **Perché non un URL relativo dentro `BOOKMARKLET()`**: quando il
   bookmarklet gira, il contesto è la pagina di BabyConnect
   (`app.babyconnect.it`), non la landing page — un URL relativo lì
   risolverebbe contro il dominio sbagliato. La sostituzione va fatta prima,
   lato landing page, dove `location.href` è ancora quello giusto (`new URL()`
-  gestisce da sola anche i deploy sotto sottopercorso, es. i "project site"
-  di GitHub Pages).
+  gestisce da sola anche il sottopercorso del "project site" di GitHub
+  Pages).
   **CORS**: GitHub Pages manda già `Access-Control-Allow-Origin: *` di
-  default su tutti i file, quindi non serve configurazione CORS manuale per
-  le copie pubblicate lì (a differenza di nginx, vedi sotto).
-  **Compromesso noto (solo per la copia su GitHub Pages)**: servita dietro
-  CDN Fastly con `Cache-Control: max-age=600` fisso, non derogabile per
-  singolo file — lo spegnimento può impiegare fino a ~10 minuti a
-  propagarsi, contro il quasi-istantaneo di `no-store` su nginx. Accettabile
-  per il caso d'uso (non è un kill switch di sicurezza in tempo reale).
+  default su tutti i file, nessuna configurazione manuale necessaria.
+  **Compromesso noto**: GitHub Pages è servita dietro CDN Fastly con
+  `Cache-Control: max-age=600` fisso, non derogabile per singolo file — lo
+  spegnimento può impiegare fino a ~10 minuti a propagarsi a tutti gli
+  utenti. Accettabile per il caso d'uso (non è un kill switch di sicurezza in
+  tempo reale).
   **Limite noto**: copre solo chi ha trascinato il segnalibro dalla v9 in poi;
   versioni precedenti non hanno il controllo.
 - **Numero di versione (`BM_VERSION`)**: un bookmarklet già trascinato nei
@@ -179,34 +179,18 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
 
 ## Infrastruttura
 
-- **Sito (landing page)**: servito da un server nginx personale (Let's
-  Encrypt/Certbot) su un dominio custom, root statico con file principale
-  `index.html` (questo stesso file, copiato così com'è). Deploy: nessuna
-  pipeline, copia manuale del file (`scp`/`sudo cp`) nel root nginx.
-- **GitHub Pages (v11+)**: repo `simoneconti/babyconnect-photo-downloader` su
-  GitHub, pubblicato anche su
+- **Sito**: **GitHub Pages**, unico metodo di pubblicazione — repo
+  `simoneconti/babyconnect-photo-downloader` su GitHub, pubblicato su
   `https://simoneconti.github.io/babyconnect-photo-downloader/` (Settings →
   Pages → Deploy from branch `master`, root; richiede repo pubblico sul piano
-  free). Pubblica l'intero repo, quindi è una copia parallela completa di
-  `index.html` + `status.json`, non solo quest'ultimo.
-- **status.json — quale copia guarda ognuno**: dalla v12 ogni copia della
-  landing page genera bookmarklet che controllano il **proprio** `status.json`
-  (calcolato da `location.href` al momento della generazione del link, non un
-  URL fisso — vedi il punto "Kill switch remoto" sopra). Chi trascina il
-  segnalibro dalla copia nginx controlla il `status.json` su nginx; chi lo
-  trascina dalla copia GitHub Pages controlla quello su GitHub Pages. Per
-  bloccare TUTTI gli utenti serve quindi aggiornare `status.json` in
-  **entrambi** i posti (nginx via `scp`, GitHub Pages via `git push`) finché
-  restano due copie pubblicate in parallelo.
-- **CORS su GitHub Pages**: mandato di default (`Access-Control-Allow-Origin:
-  *` su tutti i file), nessuna configurazione manuale necessaria lì — a
-  differenza di nginx, che richiede ancora il blocco CORS per `status.json`
-  finché quella copia resta in uso da qualche bookmarklet già trascinato.
-- **Nota transitoria**: la landing page "ufficiale" resta per ora su
-  nginx/dominio custom; GitHub Pages è una copia parallela, non ancora
-  collegata al dominio custom. Non sono stati spostati DNS su Pages — se in
-  futuro si decide di migrare anche il dominio, vedi i passi aggiuntivi
-  (CNAME, DNS, HTTPS) discussi ma non ancora applicati.
+  free). File principale `index.html` (questo stesso file, copiato così
+  com'è), più `status.json` per il kill switch.
+- **Deploy**: nessuna pipeline manuale — pubblicazione automatica ad ogni
+  `git push` su `master`. Aggiornare `status.json` per attivare il kill
+  switch è quindi anch'esso un semplice push, non richiede accesso a nessun
+  server.
+- **CORS**: GitHub Pages manda di default `Access-Control-Allow-Origin: *` su
+  tutti i file, nessuna configurazione manuale necessaria.
 
 ---
 

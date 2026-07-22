@@ -46,9 +46,8 @@ documentati in [CLAUDE.md](CLAUDE.md).
 
 ## Deploy
 
-Pubblicato in parallelo su GitHub Pages (automatico al push su `master`) e su
-un server nginx personale (copia manuale, vedi sezione Infrastruttura in
-[CLAUDE.md](CLAUDE.md)).
+GitHub Pages, pubblicazione automatica ad ogni push su `master` (vedi sezione
+Infrastruttura in [CLAUDE.md](CLAUDE.md)).
 
 ## Autore
 

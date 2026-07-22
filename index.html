@@ -931,12 +931,12 @@ function BOOKMARKLET(){
 // serializza il bookmarklet nell'href del pulsante (niente problemi di escaping)
 (function(){
   var code="("+BOOKMARKLET.toString()+")();";
-  // ogni copia di questa pagina (dominio nginx, GitHub Pages, ecc.) genera un
-  // bookmarklet che controlla il PROPRIO status.json, non uno fisso: risolto
-  // qui (al momento in cui la landing page genera il link), non dentro al
-  // bookmarklet — lì un URL relativo risolverebbe contro app.babyconnect.it,
-  // non contro il dominio dello strumento. new URL() gestisce da sola anche
-  // i deploy sotto sottopercorso (es. i "project site" di GitHub Pages).
+  // il bookmarklet controlla il PROPRIO status.json, non un URL fisso:
+  // risolto qui (al momento in cui la landing page genera il link), non
+  // dentro al bookmarklet — lì un URL relativo risolverebbe contro
+  // app.babyconnect.it, non contro il dominio dello strumento. new URL()
+  // gestisce da sola anche il sottopercorso del "project site" di GitHub
+  // Pages.
   var statusUrl=new URL("status.json", location.href).href;
   code=code.replace(/(STATUS_URL\s*=\s*")[^"]*(")/, "$1"+statusUrl+"$2");
   document.getElementById("bm").href="javascript:"+encodeURIComponent(code);
