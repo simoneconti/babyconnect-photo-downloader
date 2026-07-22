@@ -267,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="21";
+  var BM_VERSION="0.21.0"; // semver: major.minor.patch — vedi CLAUDE.md per la regola di quale cifra alzare
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -301,9 +301,15 @@ function BOOKMARKLET(){
       var r=await fetch(PAGE_URL+"?t="+Date.now(), {cache:"no-store"});
       if(!r.ok) return null;
       var html=await r.text();
-      var m=html.match(/BM_VERSION\s*=\s*"(\d+)"/);
-      return m ? parseInt(m[1],10) : null;
+      var m=html.match(/BM_VERSION\s*=\s*"(\d+\.\d+\.\d+)"/);
+      return m ? m[1] : null;
     }catch(e){ return null; }
+  }
+  // confronto semver (major.minor.patch numerici): torna >0 se a>b, 0 se uguali, <0 se a<b
+  function compareSemver(a,b){
+    var pa=a.split(".").map(Number), pb=b.split(".").map(Number);
+    for(var i=0;i<3;i++){ if(pa[i]!==pb[i]) return pa[i]-pb[i]; }
+    return 0;
   }
   function showPausedScreen(message){
     if(document.getElementById("_bcRoot")) return;
@@ -1083,7 +1089,7 @@ function BOOKMARKLET(){
 
     buildUI();
     checkLatestVersion().then(function(latest){
-      if(!latest || latest<=parseInt(BM_VERSION,10)) return;
+      if(!latest || compareSemver(latest,BM_VERSION)<=0) return;
       var b=document.getElementById("_bcVerBanner");
       if(b){ b.style.display="block"; b.textContent="📣 È disponibile una versione più aggiornata dello strumento (v"+latest+", questa è v"+BM_VERSION+"). Non è urgente: quando vuoi, elimina questo segnalibro e trascina di nuovo il pulsante dalla pagina di Simone."; }
     });
@@ -1155,7 +1161,7 @@ function BOOKMARKLET(){
   });
   // la versione mostrata in pagina viene letta dallo stesso codice del bookmarklet,
   // così landing e pannello non possono mai disallinearsi per errore
-  var m=code.match(/BM_VERSION\s*=\s*"(\d+)"/);
+  var m=code.match(/BM_VERSION\s*=\s*"(\d+\.\d+\.\d+)"/);
   var verEl=document.getElementById("_bcLandingVer");
   if(verEl) verEl.textContent = m ? ("v"+m[1]) : "?";
 })();

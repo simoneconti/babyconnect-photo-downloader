@@ -187,10 +187,19 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
   preferiti NON si aggiorna mai da solo (il browser copia il codice al momento
   del trascinamento). Il numero, definito una sola volta dentro
   `BOOKMARKLET()`, viene letto anche dalla landing page tramite regex sul
-  codice serializzato (`code.match(/BM_VERSION\s*=\s*"(\d+)"/)`), così i due
-  punti non possono disallinearsi per un refuso. **Alzare questo numero a ogni
-  modifica funzionale reale del bookmarklet** (non serve per modifiche solo
-  alla landing page/CSS che non toccano `BOOKMARKLET()`).
+  codice serializzato (`code.match(/BM_VERSION\s*=\s*"(\d+\.\d+\.\d+)"/)`),
+  così i due punti non possono disallinearsi per un refuso.
+  **Formato semver (`major.minor.patch`)**, adottato dalla v0.21.0 (le
+  versioni precedenti erano un contatore intero semplice, v1-v21, ora solo
+  storia nei commit). Il confronto per l'avviso "nuova versione disponibile"
+  (`checkLatestVersion`/`compareSemver` nel bookmarklet) è un confronto
+  semver numerico campo per campo, non lessicografico sulla stringa — non
+  tornare a `parseInt` su tutto il numero se si tocca questa parte.
+  **Alzare questo numero a ogni modifica funzionale reale del bookmarklet**
+  (non serve per modifiche solo alla landing page/CSS che non toccano
+  `BOOKMARKLET()`): patch per bugfix, minor per nuove funzionalità
+  retrocompatibili, major per cambi che rompono qualcosa (es. formato del
+  promemoria `_stato-{childId}.json`, naming dei file già scaricati).
 
 ---
 
