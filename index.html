@@ -267,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="0.21.0"; // semver: major.minor.patch — vedi CLAUDE.md per la regola di quale cifra alzare
+  var BM_VERSION="0.21.1"; // semver: major.minor.patch — vedi CLAUDE.md per la regola di quale cifra alzare
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -761,8 +761,7 @@ function BOOKMARKLET(){
   function backToConfig(){
     S.running=false; S.fsaDir=null; S.zip=null;
     showPanel("config");
-    var goBtn=document.getElementById("_bcGo");
-    if(goBtn){ goBtn.disabled=false; goBtn.style.cursor="pointer"; goBtn.style.opacity="1"; }
+    setGoEnabled(true);
   }
 
   function finish(status){
@@ -815,6 +814,16 @@ function BOOKMARKLET(){
   function showPanel(which){
     document.getElementById("_bcConfig").style.display=which==="config"?"block":"none";
     document.getElementById("_bcRun").style.display=which==="progress"?"block":"none";
+  }
+
+  // abilita/disabilita insieme il pulsante "Scegli cartella e avvia" e l'avviso sulla
+  // cartella vuota: finché il bambino non è riconosciuto (o durante la ricerca), avviare
+  // non è possibile, quindi anche l'avviso relativo alla scelta della cartella resta sbiadito.
+  function setGoEnabled(ok){
+    var goBtn=document.getElementById("_bcGo");
+    if(goBtn){ goBtn.disabled=!ok; goBtn.style.cursor=ok?"pointer":"default"; goBtn.style.opacity=ok?"1":".5"; }
+    var warn=document.getElementById("_bcFolderWarn");
+    if(warn){ warn.style.opacity=ok?"1":".5"; }
   }
 
   function schoolYearStart(){
@@ -941,7 +950,7 @@ function BOOKMARKLET(){
       '<div id="_bcZipHint" style="display:none;font-size:.78rem;margin-top:2px"></div>'+
       '</div>'
     ));
-    config.appendChild(el('<div style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
+    config.appendChild(el('<div id="_bcFolderWarn" style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0;opacity:.5"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
     config.appendChild(el('<button id="_bcGo" disabled style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:default;opacity:.5">Scegli cartella e avvia</button>'));
     config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
     card.appendChild(config);
@@ -1069,8 +1078,7 @@ function BOOKMARKLET(){
         S.childId=this.value.replace(/\D/g,"")||null;
         var datesEl=document.getElementById("_bcDates");
         if(datesEl) datesEl.style.display = S.childId ? "block" : "none";
-        var goBtn=document.getElementById("_bcGo");
-        if(goBtn){ goBtn.disabled=!S.childId; goBtn.style.cursor=S.childId?"pointer":"default"; goBtn.style.opacity=S.childId?"1":".5"; }
+        setGoEnabled(!!S.childId);
       };},0);
     }
   }
@@ -1121,8 +1129,7 @@ function BOOKMARKLET(){
 
     S.childId=res.id;
     renderWho(res);
-    var goBtn=document.getElementById("_bcGo");
-    if(goBtn){ var ok=!!S.childId; goBtn.disabled=!ok; goBtn.style.cursor=ok?"pointer":"default"; goBtn.style.opacity=ok?"1":".5"; }
+    setGoEnabled(!!S.childId);
 
     log("⏳ Preparo gli strumenti…");
     try{ await loadScript(CDN_PIEXIF); log("✓ Scrittura data nelle foto pronta."); }catch(e){ log("⚠ Data EXIF non disponibile (continuo lo stesso)."); }
