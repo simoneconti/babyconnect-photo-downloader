@@ -25,6 +25,7 @@
 
   /* the drag card — signature element */
   .grab{max-width:520px;margin:36px auto 8px;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:26px;text-align:center;border:2px dashed #F5C2D6}
+  .grab.in-step{max-width:100%;margin:16px 0 0;padding:20px}
   .grab .hint{font-size:.95rem;color:var(--ink);font-weight:700;margin-bottom:16px}
   .bm{display:inline-flex;align-items:center;gap:10px;background:var(--grad);color:#fff;padding:15px 26px 15px 18px;border-radius:14px;font-size:1.05rem;font-weight:700;text-decoration:none;cursor:grab;user-select:none;box-shadow:0 10px 26px rgba(255,61,119,.38);transition:transform .18s,box-shadow .18s;position:relative;animation:wiggle 2.5s ease-in-out infinite}
   .bm:active{cursor:grabbing;animation:none}
@@ -91,13 +92,6 @@
   <h1>Salva tutte le foto dei tuoi figli al <em>Casello dei Piccoli</em></h1>
   <p>Uno strumento che scarica sul tuo computer le foto dei tuoi bambini dal portale della scuola, con la data giusta già dentro ogni foto.</p>
   <p style="font-size:1.3rem;font-weight:800;color:var(--ink);margin-top:18px">❤️ Sviluppato con amore da Simone, papà di Sole.</p>
-
-  <div class="grab">
-    <div class="hint">👇 NON cliccare: trascina questo pulsante nella barra dei preferiti 👇</div>
-    <a id="bm" class="bm" href="#"><span class="grip">⠿</span><span class="ic">📸</span> Scarica foto scuola</a>
-    <div class="drag"><span class="arrow">↥</span> tienilo premuto e portalo in alto</div>
-    <div style="margin-top:14px;font-size:.78rem;color:#B4A9CC">Versione più recente di questa pagina: <b id="_bcLandingVer" style="color:var(--ink-soft)">…</b> — <a href="#versione" style="color:var(--pink);text-decoration:underline">come faccio a sapere se ho l'ultima?</a></div>
-  </div>
 </header>
 
 <main class="wrap">
@@ -117,8 +111,14 @@
     <div class="step">
       <div class="n">2</div>
       <div>
-        <h3>Trascina lassù il pulsante rosa</h3>
-        <p>Prendi il pulsante “Scarica foto scuola” qui sopra e trascinalo nella barra dei preferiti. Lo aggiungi una volta sola.</p>
+        <h3>Trascina il pulsante nella barra dei preferiti</h3>
+        <p>Lo aggiungi una volta sola.</p>
+        <div class="grab in-step">
+          <div class="hint">👇 NON cliccare: trascina questo pulsante nella barra dei preferiti 👇</div>
+          <a id="bm" class="bm" href="#"><span class="grip">⠿</span><span class="ic">📸</span> Scarica foto scuola</a>
+          <div class="drag"><span class="arrow">↥</span> tienilo premuto e portalo in alto</div>
+        </div>
+        <div style="margin-top:14px;font-size:.78rem;color:#B4A9CC">Versione più recente di questa pagina: <b id="_bcLandingVer" style="color:var(--ink-soft)">…</b> — <a href="#versione" style="color:var(--pink);text-decoration:underline">come faccio a sapere se ho l'ultima?</a></div>
       </div>
     </div>
 
@@ -135,7 +135,7 @@
       <div class="n">4</div>
       <div>
         <h3>Clicca il preferito e scegli il periodo</h3>
-        <p>Clicca <strong>“Scarica foto scuola”</strong> nella barra dei preferiti. Si apre un pannello: scegli da quando a quando scaricare (parte già impostato su tutto l’anno scolastico), poi scegli una <strong>cartella vuota</strong> dedicata solo a queste foto e avvia. Lo strumento leggerà e scriverà solo lì dentro, mai altrove sul tuo computer.</p>
+        <p>Clicca <strong>“Scarica foto scuola”</strong> nella barra dei preferiti. Si apre un pannello: segui le istruzioni lì dentro. Lo strumento leggerà e scriverà solo nella cartella che scegli, mai altrove sul tuo computer.</p>
       </div>
     </div>
   </section>
