@@ -127,16 +127,23 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
   "Sole Conti Sideri — 2025/2026 (in corso)", mai due select dipendenti
   (bambino → poi anno filtrato) — evita di dover gestire correttamente casi
   limite tipo "fratello non ancora iscritto in un anno passato".
-- **Kill switch remoto (v9+)**: prima di ogni uso, fetch a
-  `https://babyconnect-photo-downloader.simoneconti.dev/status.json`
+- **Kill switch remoto (v9+, spostato su GitHub Pages in v11)**: prima di ogni
+  uso, fetch a
+  `https://simoneconti.github.io/babyconnect-photo-downloader/status.json`
   (fail-closed: se il controllo fallisce per qualunque motivo — rete, CORS,
   JSON non valido — lo strumento si blocca, non procede). Serve per poter
   "spegnere" lo strumento per tutti i genitori se BabyConnect dovesse avere
   problemi di carico, senza dover chiedere a nessuno di fare nulla.
   **Importante**: questo fetch è cross-origin dal punto di vista del
   bookmarklet (che gira su `app.babyconnect.it`, non sul dominio dello
-  strumento), quindi il file va servito con header
-  `Access-Control-Allow-Origin: *` — configurato in nginx, vedi sotto.
+  strumento). GitHub Pages manda già `Access-Control-Allow-Origin: *` di
+  default su tutti i file, quindi non serve più alcuna configurazione CORS
+  manuale (a differenza di quando `status.json` era su nginx, vedi sotto).
+  **Compromesso noto**: GitHub Pages serve tutto dietro CDN Fastly con
+  `Cache-Control: max-age=600` fisso, non derogabile per singolo file —
+  quindi lo spegnimento può impiegare fino a ~10 minuti a propagarsi a tutti
+  gli utenti, contro il quasi-istantaneo di `no-store` su nginx. Accettabile
+  per il caso d'uso (non è un kill switch di sicurezza in tempo reale).
   **Limite noto**: copre solo chi ha trascinato il segnalibro dalla v9 in poi;
   versioni precedenti non hanno il controllo.
 - **Numero di versione (`BM_VERSION`)**: un bookmarklet già trascinato nei
@@ -152,17 +159,26 @@ già gestito correttamente, nessuna azione necessaria se si tocca questo codice.
 
 ## Infrastruttura
 
-- **Sito**: `https://babyconnect-photo-downloader.simoneconti.dev`, servito da
-  nginx (Let's Encrypt/Certbot), root statico in
+- **Sito (landing page)**: `https://babyconnect-photo-downloader.simoneconti.dev`,
+  servito da nginx (Let's Encrypt/Certbot), root statico in
   `/var/www/babyconnect-photo-downloader/`, file principale `index.html`
-  (questo stesso file, copiato così com'è).
-- **status.json**: stesso root, richiede il blocco nginx con header CORS
-  (`location = /status.json { add_header Access-Control-Allow-Origin * always;
-  add_header Cache-Control "no-store, must-revalidate" always;
-  default_type application/json; }`), altrimenti il kill switch fail-closed
-  blocca tutti permanentemente per un errore di CORS silenzioso.
-- **Deploy**: nessuna pipeline, copia manuale del file (`scp`/`sudo cp`) nel
-  root nginx.
+  (questo stesso file, copiato così com'è). Deploy: nessuna pipeline, copia
+  manuale del file (`scp`/`sudo cp`) nel root nginx.
+- **status.json (kill switch)**: dalla v11 servito da **GitHub Pages**, non
+  più da nginx — repo `simoneconti/babyconnect-photo-downloader` su GitHub,
+  pubblicato su `https://simoneconti.github.io/babyconnect-photo-downloader/`
+  (Settings → Pages → Deploy from branch `master`, root; richiede repo
+  pubblico sul piano free). Aggiornare `status.json` per attivare il kill
+  switch è quindi un semplice `git push` su `master`, non più uno `scp`. Il
+  blocco CORS manuale in nginx per `status.json` non serve più (GitHub Pages
+  lo manda di default) e può essere rimosso dalla config nginx se non altri
+  file dipendono da esso.
+- **Nota transitoria**: la landing page vera e propria resta per ora su
+  nginx/dominio custom; solo `status.json` (e una copia parallela di
+  `index.html`, dato che GitHub Pages pubblica l'intero repo) vive su GitHub
+  Pages. Non sono ancora stati spostati DNS/dominio custom su Pages — se in
+  futuro si decide di migrare anche la landing page, vedi i passi aggiuntivi
+  (CNAME, DNS, HTTPS) discussi ma non ancora applicati.
 
 ---
 

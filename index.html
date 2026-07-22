@@ -264,7 +264,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="10";
+  var BM_VERSION="11";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -272,7 +272,7 @@ function BOOKMARKLET(){
   var CONC={discovery:5, download:5};        // fisso per tutti: nessuna scelta da fare
   var RECHECK_DAYS=7;                        // ricontrolla gli ultimi giorni (upload in ritardo)
   var ZIP_MAX_WEEKDAYS=40;                   // limite di sicurezza in modalità ZIP (~2 mesi): niente cartella su disco, tutto resta in memoria
-  var STATUS_URL="https://babyconnect-photo-downloader.simoneconti.dev/status.json";
+  var STATUS_URL="https://simoneconti.github.io/babyconnect-photo-downloader/status.json";
 
   // interruttore remoto: controllato ad ogni lancio, PRIMA di toccare BabyConnect.
   // fail-closed: se il controllo stesso fallisce (rete, file assente, JSON non valido),
