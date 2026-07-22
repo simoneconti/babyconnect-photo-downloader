@@ -265,7 +265,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="12";
+  var BM_VERSION="13";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -645,6 +645,7 @@ function BOOKMARKLET(){
     // fermiamo lo spinner e lo shimmer: il lavoro è finito, non deve sembrare ancora in corso
     var spin=document.querySelector("#_bcProgLab .spinner"); if(spin) spin.outerHTML = status==="done" ? "✓ " : "⏹ ";
     var shine=document.querySelector(".prog-track .shine"); if(shine) shine.style.display="none";
+    if(progTick){ clearInterval(progTick); progTick=null; }
   }
 
   // ── UI ───────────────────────────────────────────────────────────────────────
@@ -652,13 +653,27 @@ function BOOKMARKLET(){
   function log(m){var e=document.getElementById("_bcLog");if(!e)return;var d=document.createElement("div");d.textContent=m;e.appendChild(d);e.scrollTop=e.scrollHeight;}
   function setCount(){var e=document.getElementById("_bcCount");if(e)e.textContent=S.total;var s=document.getElementById("_bcSkip");if(s)s.textContent=S.skipped;}
   function setBtn(t){var b=document.getElementById("_bcStop");if(b)b.textContent=t;}
+  var progTick=null, progState=null;
   function prog(label,cur,tot,etaMs){
+    // niente feedback dal completamento delle richieste finché non ne finisce
+    // almeno una (con CONC.discovery=5 in parallelo, possono volerci 27-33s
+    // prima del primo aggiornamento): un ticker a parte mostra i secondi
+    // trascorsi, così il pannello non sembra bloccato in quell'attesa.
+    if(!progState || progState.label!==label){ progState={label:label,t0:Date.now()}; }
+    progState.cur=cur; progState.tot=tot; progState.etaMs=etaMs;
+    renderProg();
+    if(!progTick){ progTick=setInterval(renderProg,1000); }
+  }
+  function renderProg(){
+    if(!progState) return;
     var box=document.getElementById("_bcProg"),bar=document.getElementById("_bcBar"),lab=document.getElementById("_bcProgLab");
     if(!bar)return; box.style.display="block";
+    var cur=progState.cur, tot=progState.tot, etaMs=progState.etaMs, label=progState.label;
     bar.style.width=(tot?Math.round(cur/tot*100):0)+"%";
     var eta="";
     if(etaMs && isFinite(etaMs) && cur<tot){ var m=Math.ceil(etaMs/60000); eta=" · ~"+(m<=1?"meno di 1 min":m+" min")+" rimasti"; }
-    lab.innerHTML='<span class="spinner"></span>'+escapeHtml(label+" "+cur+"/"+tot+eta);
+    var live = cur<tot ? " · in corso da "+Math.floor((Date.now()-progState.t0)/1000)+"s" : "";
+    lab.innerHTML='<span class="spinner"></span>'+escapeHtml(label+" "+cur+"/"+tot+eta+live);
   }
   function showPanel(which){
     document.getElementById("_bcConfig").style.display=which==="config"?"block":"none";
@@ -938,8 +953,15 @@ function BOOKMARKLET(){
   // app.babyconnect.it, non contro il dominio dello strumento. new URL()
   // gestisce da sola anche il sottopercorso del "project site" di GitHub
   // Pages.
-  var statusUrl=new URL("status.json", location.href).href;
-  code=code.replace(/(STATUS_URL\s*=\s*")[^"]*(")/, "$1"+statusUrl+"$2");
+  // in sviluppo locale (file://) non riscriviamo l'URL: un file:// non è
+  // fetchabile da https://app.babyconnect.it (i browser lo bloccano sempre),
+  // quindi il check fallirebbe e ci bloccherebbe pure in locale. Lasciamo il
+  // fallback già hardcoded (il vero status.json su GitHub Pages), così anche
+  // durante lo sviluppo il check è quello reale e passa normalmente.
+  if(location.protocol!=="file:"){
+    var statusUrl=new URL("status.json", location.href).href;
+    code=code.replace(/(STATUS_URL\s*=\s*")[^"]*(")/, "$1"+statusUrl+"$2");
+  }
   document.getElementById("bm").href="javascript:"+encodeURIComponent(code);
   document.getElementById("bm").addEventListener("click", function(e){
     e.preventDefault();

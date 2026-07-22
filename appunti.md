@@ -1,0 +1,1 @@
+- fino a che non scegli bambino/anno e periodo, il bottone per iniziare deve essere spento.
