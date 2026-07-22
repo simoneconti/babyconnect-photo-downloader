@@ -209,6 +209,7 @@
     </details>
   </section>
 
+  <!-- donazioni disattivate temporaneamente, da rimettere più avanti
   <div class="donate">
     <h3>☕ Ti è stato utile?</h3>
     <p>Questo strumento è e resterà sempre gratuito. Se ti ha risparmiato del tempo e ti va di ringraziare con un piccolo gesto, è benvenuto — ma non è richiesto in nessun modo.</p>
@@ -218,6 +219,7 @@
       <a class="donate-btn" href="https://paypal.me/simoneconti84/3EUR" target="_blank" rel="noopener"><span class="em">🍊</span><span class="price">3€</span><span class="lbl">Spremuta d'arancia</span></a>
     </div>
   </div>
+  -->
 
 </main>
 
@@ -265,7 +267,7 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="13";
+  var BM_VERSION="15";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
@@ -689,6 +691,7 @@ function BOOKMARKLET(){
   // lingua/formato del sistema dell'utente e non quella della pagina) ───────────
   var MESI_IT=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
   var GIORNI_IT=["Lu","Ma","Me","Gi","Ve","Sa","Do"];
+  var _bcOpenCals=[]; // tutti i mini-calendari creati, per chiudere gli altri quando se ne apre uno
   function isoToIt(iso){ if(!iso) return ""; var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
   function makeDatePicker(inputId, calId){
     var input=document.getElementById(inputId), cal=document.getElementById(calId);
@@ -729,20 +732,39 @@ function BOOKMARKLET(){
     }
     input.onclick=function(e){
       e.stopPropagation();
-      var base=iso||minIso||keyOf(new Date()), p=base.split("-");
-      viewYear=+p[0]; viewMonth=+p[1]-1;
-      render();
-      cal.style.display = cal.style.display==="block" ? "none" : "block";
+      var willOpen = cal.style.display!=="block";
+      _bcOpenCals.forEach(function(c){ if(c!==cal) c.style.display="none"; });
+      if(willOpen){
+        var base=iso||minIso||keyOf(new Date()), p=base.split("-");
+        viewYear=+p[0]; viewMonth=+p[1]-1;
+        render();
+        cal.style.display="block";
+        // se sotto non c'è spazio (es. campo "A" vicino al fondo della card), apre sopra il campo.
+        // Il limite è il bordo inferiore della card (non della finestra): la card ha max-height:92vh
+        // con overflow:auto, quindi il suo getBoundingClientRect() resta fisso al bordo visibile
+        // anche quando il contenuto interno eccede — è quello il vincolo reale, non la viewport.
+        var rect=input.getBoundingClientRect();
+        var cardEl=document.getElementById("_bcCard");
+        var limit = cardEl ? cardEl.getBoundingClientRect().bottom : window.innerHeight;
+        var openUp = (rect.bottom + cal.offsetHeight + 10) > limit;
+        cal.style.top = openUp ? "auto" : "100%";
+        cal.style.bottom = openUp ? "100%" : "auto";
+        cal.style.marginTop = openUp ? "0" : "4px";
+        cal.style.marginBottom = openUp ? "4px" : "0";
+      }else{
+        cal.style.display="none";
+      }
     };
     document.addEventListener("click", function(e){
       if(cal.style.display==="block" && !cal.contains(e.target) && e.target!==input) cal.style.display="none";
     });
+    _bcOpenCals.push(cal);
     return { setIso:setIso, setBounds:setBounds, getIso:function(){return iso;}, getMin:function(){return minIso;}, getMax:function(){return maxIso;} };
   }
 
   function buildUI(){
     var root=el('<div id="_bcRoot" style="position:fixed;inset:0;background:rgba(30,15,45,.62);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif"></div>');
-    var card=el('<div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:94%;max-height:92vh;overflow:auto;box-shadow:0 30px 70px rgba(0,0,0,.4)"></div>');
+    var card=el('<div id="_bcCard" style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:94%;max-height:92vh;overflow:auto;box-shadow:0 30px 70px rgba(0,0,0,.4)"></div>');
     card.appendChild(el('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:1.12rem;font-weight:800;color:#241C3B">📸 Scarica foto scuola <span style="font-size:.68rem;font-weight:700;color:#B4A9CC;vertical-align:middle">v'+BM_VERSION+'</span></span><button id="_bcX" style="background:none;border:none;font-size:1.6rem;line-height:1;color:#B4A9CC;cursor:pointer">×</button></div>'));
 
     var sd=schoolYearStart(), td=new Date();
@@ -763,7 +785,7 @@ function BOOKMARKLET(){
       '</div>'
     ));
     config.appendChild(el('<p style="font-size:.78rem;color:#8B80AE;background:#F7F5FD;border-radius:9px;padding:8px 10px;margin-bottom:10px">📁 Al passo dopo ti verrà chiesto di scegliere una cartella: scegline una <b>vuota</b>, dedicata solo a queste foto. Lo strumento leggerà e scriverà <b>solo lì dentro</b>, mai altrove sul tuo computer.</p>'));
-    config.appendChild(el('<button id="_bcGo" style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer">Scegli cartella e avvia</button>'));
+    config.appendChild(el('<button id="_bcGo" disabled style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:default;opacity:.5">Scegli cartella e avvia</button>'));
     config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
     card.appendChild(config);
 
@@ -933,6 +955,8 @@ function BOOKMARKLET(){
 
     S.childId=res.id;
     renderWho(res);
+    var goBtn=document.getElementById("_bcGo");
+    if(goBtn){ goBtn.disabled=false; goBtn.style.cursor="pointer"; goBtn.style.opacity="1"; }
 
     log("⏳ Preparo gli strumenti…");
     try{ await loadScript(CDN_PIEXIF); log("✓ Scrittura data nelle foto pronta."); }catch(e){ log("⚠ Data EXIF non disponibile (continuo lo stesso)."); }
