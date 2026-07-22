@@ -588,18 +588,19 @@ function BOOKMARKLET(){
 
     // 3) quali giorni analizzare davvero (salta i passati già visti, ricontrolla gli ultimi)
     var today=new Date(); today.setHours(12,0,0,0);
-    var toScan=[], cached=0;
+    var toScan=[], cached=0, reallyNew=0;
     for(var j=0;j<dayList.length;j++){
       var k=keyOf(dayList[j]);
       var recent=(today-dayList[j])/86400000 < RECHECK_DAYS;
       if((k in S.stato.scannedDays) && !recent) cached++;
-      else toScan.push(dayList[j]);
+      else{ toScan.push(dayList[j]); if(!(k in S.stato.scannedDays)) reallyNew++; }
     }
     if(cached) log("↺ "+cached+" giorni già analizzati in passato: li salto.");
 
     // 4) DISCOVERY
     if(toScan.length){
-      log("🔎 Analizzo "+toScan.length+" giorni per trovare le foto… (il sito è lento, abbi pazienza)");
+      if(reallyNew===0) log("✓ Hai già analizzato tutti i giorni del periodo scelto. Per sicurezza ricontrolliamo gli ultimi "+toScan.length+" giorni alla ricerca di eventuali aggiornamenti…");
+      else log("🔎 Analizzo "+toScan.length+" giorni per trovare le foto… (il sito è lento, abbi pazienza)");
       prog("Giorni analizzati",0,toScan.length,null);
       var t0=Date.now(), completed=0, falliti=0;
       await pool(toScan,CONC.discovery,async function(dd){
