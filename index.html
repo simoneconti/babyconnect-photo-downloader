@@ -267,15 +267,17 @@
 function BOOKMARKLET(){
   "use strict";
   if(document.getElementById("_bcRoot")) return;
-  var BM_VERSION="20";
+  var BM_VERSION="21";
 
   var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
   var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
 
-  var CONC={discovery:5, download:5};        // fisso per tutti: nessuna scelta da fare
+  var CONC={discovery:5, download:5};        // limiti nominali: la concorrenza EFFETTIVA (S.concEffective) può scendere sotto questi se il sito dà segnali di rallentamento (vedi onThrottle)
   var RECHECK_DAYS=7;                        // ricontrolla gli ultimi giorni (upload in ritardo)
   var ZIP_MAX_WEEKDAYS=40;                   // limite di sicurezza in modalità ZIP (~2 mesi): niente cartella su disco, tutto resta in memoria
   var STATUS_URL="https://simoneconti.github.io/babyconnect-photo-downloader/status.json"; // fallback: la landing page lo sovrascrive con il proprio dominio prima di generare il link, vedi IIFE finale
+  var PAGE_URL="https://simoneconti.github.io/babyconnect-photo-downloader/index.html"; // fallback, stesso meccanismo di STATUS_URL: usato solo per leggere il BM_VERSION più recente pubblicato (vedi checkLatestVersion)
+  var GITHUB_ISSUE_URL="https://github.com/simoneconti/babyconnect-photo-downloader/issues/new";
 
   // interruttore remoto: controllato ad ogni lancio, PRIMA di toccare BabyConnect.
   // fail-closed: se il controllo stesso fallisce (rete, file assente, JSON non valido),
@@ -289,6 +291,19 @@ function BOOKMARKLET(){
       if(j && j.enabled===true) return {enabled:true, message:j.message||null};
       return {enabled:false, message:(j && j.message) ? j.message : null};
     }catch(e){ return {enabled:false, message:null}; }
+  }
+  // legge il BM_VERSION dalla landing page pubblicata in questo momento (stesso trucco già
+  // usato dalla landing page per mostrare la versione senza duplicare il numero a mano —
+  // vedi IIFE finale): così un bookmarklet vecchio può accorgersi da solo di esserlo.
+  // Fail-open (a differenza del kill switch): è solo informativo, non blocca nulla se fallisce.
+  async function checkLatestVersion(){
+    try{
+      var r=await fetch(PAGE_URL+"?t="+Date.now(), {cache:"no-store"});
+      if(!r.ok) return null;
+      var html=await r.text();
+      var m=html.match(/BM_VERSION\s*=\s*"(\d+)"/);
+      return m ? parseInt(m[1],10) : null;
+    }catch(e){ return null; }
   }
   function showPausedScreen(message){
     if(document.getElementById("_bcRoot")) return;
@@ -305,7 +320,8 @@ function BOOKMARKLET(){
   }
 
   var S={running:false, stop:false, fsaDir:null, zip:null, childId:null,
-         stato:{scannedDays:{}, savedPhotos:{}}, seen:{}, total:0, skipped:0};
+         stato:{scannedDays:{}, savedPhotos:{}}, seen:{}, total:0, skipped:0,
+         concEffective:CONC.discovery, throttleLogged:false, structIssues:[]};
   var ROOT_EL=null;
 
   // ── utility ────────────────────────────────────────────────────────────────
@@ -343,12 +359,24 @@ function BOOKMARKLET(){
   }
 
   function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+  // 429/403 sono segnali espliciti che il sito sta reagendo al carico (diverso da un
+  // errore di rete generico, o da un 401 di sessione scaduta, già gestito altrove):
+  // qui riduciamo la concorrenza effettiva per il resto del lancio, invece di insistere
+  // sempre alla stessa velocità — vedi CLAUDE.md, sezione rischio ToS/ban.
+  function onThrottle(){
+    if(S.concEffective>1) S.concEffective--;
+    if(!S.throttleLogged){ S.throttleLogged=true; log("🐢 Il sito della scuola sembra sotto pressione: rallento le richieste per non peggiorare la situazione."); }
+  }
   async function getText(u,opts,tries){
     tries=tries||2;
     for(var t=0;t<tries;t++){
-      try{ var r=await fetch(u,Object.assign({credentials:"include"},opts||{})); if(r.ok) return await r.text(); }
+      try{
+        var r=await fetch(u,Object.assign({credentials:"include"},opts||{}));
+        if(r.ok) return await r.text();
+        if(r.status===429||r.status===403){ onThrottle(); if(tries<4) tries=4; } // segnale esplicito: vale la pena insistere di più che su un errore generico
+      }
       catch(e){}
-      if(t<tries-1) await sleep(600);
+      if(t<tries-1) await sleep(Math.min(6000, 700*Math.pow(2,t)) + Math.random()*300); // backoff esponenziale con un po' di jitter
     }
     return null;
   }
@@ -367,17 +395,23 @@ function BOOKMARKLET(){
     }catch(e){ return u8; }
   }
 
-  // pool di concorrenza
+  // pool di concorrenza — la concorrenza EFFETTIVA (S.concEffective) può scendere sotto
+  // "limit" durante l'esecuzione se onThrottle() la riduce (segnali 429/403 da getText):
+  // le corsie oltre il livello effettivo si mettono in pausa invece di prendere nuovo
+  // lavoro, senza annullare le richieste già in volo. Non risale mai sopra "limit" per
+  // questa fase, ma resta ridotta anche nella fase successiva se il throttling persiste.
   async function pool(items,limit,worker,onProg){
     var i=0,done=0;
-    async function run(){
+    S.concEffective=Math.min(limit,S.concEffective);
+    async function run(lane){
       while(i<items.length && !S.stop){
+        if(lane>=S.concEffective){ await sleep(400); continue; }
         var idx=i++;
         try{ await worker(items[idx],idx); }catch(e){}
         done++; if(onProg) onProg(done,items.length);
       }
     }
-    var r=[]; for(var k=0;k<Math.min(limit,items.length);k++) r.push(run());
+    var r=[]; for(var k=0;k<Math.min(limit,items.length);k++) r.push(run(k));
     await Promise.all(r);
   }
 
@@ -524,6 +558,17 @@ function BOOKMARKLET(){
       doc.querySelectorAll("img").forEach(function(im){ var s=im.getAttribute("src")||""; if(/resources\/Routines\//i.test(s)) imgs.push(s); });
     }catch(e){}
     if(!imgs.length){ imgs=html.match(/resources\/Routines\/[^"'\s)\\<>]+\.(?:jpe?g|png|gif|webp|mp4|mov|m4v|webm)/gi)||[]; }
+    // canary: questo id viene SEMPRE da un'attività che il giorno-pagina ha confermato
+    // esistere (regex showDetails/openGallery) — se la sua pagina di dettaglio risponde
+    // ma non contiene né titolo né foto, non è "attività senza foto", è più probabile
+    // che BabyConnect abbia cambiato la struttura di questa pagina. Segnaliamo invece
+    // di far sparire l'attività in silenzio, e la trattiamo come fallita (ritentata al
+    // prossimo lancio, come gli altri fallimenti).
+    if(!title && !imgs.length){
+      S.structIssues.push(id);
+      log("⚠ l'attività "+id+" non ha restituito né titolo né foto: il portale potrebbe essere cambiato.");
+      return false;
+    }
     for(var i=0;i<imgs.length;i++){
       if(S.stop) return true;
       var u="/"+imgs[i].replace(/^\/+/,"");
@@ -661,6 +706,22 @@ function BOOKMARKLET(){
     }
     await saveManifest();
 
+    // segnalazione: se il canary in grabActivity ha trovato attività senza né titolo né
+    // foto, mostriamo un pulsante per aprire una issue precompilata su GitHub — così un
+    // eventuale cambiamento del portale arriva a Simone dal primo genitore che lo incontra,
+    // invece di restare invisibile finché qualcuno scrive un messaggio a parte.
+    if(S.structIssues.length){
+      var reportBtn=document.getElementById("_bcReportIssue");
+      if(reportBtn){
+        reportBtn.style.display="block";
+        reportBtn.onclick=function(){
+          var title="Possibile cambiamento del portale (rilevato da v"+BM_VERSION+")";
+          var body="Durante l'uso dello strumento, "+S.structIssues.length+" attività non hanno restituito né titolo né foto dalla pagina di dettaglio — potrebbe indicare che BabyConnect ha cambiato qualcosa.\n\nVersione bookmarklet: v"+BM_VERSION+"\nBrowser: "+navigator.userAgent+"\nID attività coinvolti: "+S.structIssues.slice(0,10).join(", ");
+          window.open(GITHUB_ISSUE_URL+"?title="+encodeURIComponent(title)+"&body="+encodeURIComponent(body), "_blank");
+        };
+      }
+    }
+
     // 7) ZIP finale
     if(!S.fsaDir && S.total>0){
       log("📦 Preparo il file ZIP…");
@@ -761,10 +822,10 @@ function BOOKMARKLET(){
   var GIORNI_IT=["Lu","Ma","Me","Gi","Ve","Sa","Do"];
   var _bcOpenCals=[]; // tutti i mini-calendari creati, per chiudere gli altri quando se ne apre uno
   function isoToIt(iso){ if(!iso) return ""; var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
-  function makeDatePicker(inputId, calId){
+  function makeDatePicker(inputId, calId, onChange){
     var input=document.getElementById(inputId), cal=document.getElementById(calId);
     var iso=null, minIso=null, maxIso=null, viewYear, viewMonth;
-    function setIso(newIso){ iso=newIso; input.value=isoToIt(iso); }
+    function setIso(newIso){ iso=newIso; input.value=isoToIt(iso); if(onChange) onChange(); }
     function setBounds(min,max){ minIso=min; maxIso=max; }
     function render(){
       var d=new Date(viewYear, viewMonth, 1);
@@ -830,6 +891,26 @@ function BOOKMARKLET(){
     return { setIso:setIso, setBounds:setBounds, getIso:function(){return iso;}, getMin:function(){return minIso;}, getMax:function(){return maxIso;} };
   }
 
+  // avviso in tempo reale del limite giorni-feriali in modalità ZIP: informa mentre si
+  // scelgono le date, non solo al clic su "Scegli cartella e avvia" (che resta comunque
+  // come rete di sicurezza — vedi validazione dentro _bcGo.onclick).
+  function updateZipHint(){
+    var hintEl=document.getElementById("_bcZipHint");
+    if(!hintEl || window.showDirectoryPicker) return;
+    var fromIso=S.fromPicker&&S.fromPicker.getIso(), toIso=S.toPicker&&S.toPicker.getIso();
+    if(!fromIso||!toIso){ hintEl.style.display="none"; return; }
+    var d0=new Date(fromIso+"T00:00:00"), d1=new Date(toIso+"T00:00:00"), feriali=0;
+    if(d0<=d1){ for(var d=new Date(d0); d<=d1; d.setDate(d.getDate()+1)){ var wd=d.getDay(); if(wd!==0&&wd!==6) feriali++; } }
+    hintEl.style.display="block";
+    if(feriali>ZIP_MAX_WEEKDAYS){
+      hintEl.style.color="#C4145A";
+      hintEl.textContent="⚠ "+feriali+" giorni feriali nel periodo scelto: superano il limite di "+ZIP_MAX_WEEKDAYS+" per la modalità ZIP. Riduci il periodo, oppure usa Chrome o Edge.";
+    }else{
+      hintEl.style.color="#8B80AE";
+      hintEl.textContent=feriali+" giorni feriali nel periodo scelto (limite ZIP: "+ZIP_MAX_WEEKDAYS+").";
+    }
+  }
+
   function buildUI(){
     var root=el('<div id="_bcRoot" style="position:fixed;inset:0;background:rgba(30,15,45,.62);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif"></div>');
     var card=el('<div id="_bcCard" style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:94%;max-height:92vh;overflow:auto;box-shadow:0 30px 70px rgba(0,0,0,.4)"></div>');
@@ -837,6 +918,7 @@ function BOOKMARKLET(){
 
     var sd=schoolYearStart(), td=new Date();
     var config=el('<div id="_bcConfig"></div>');
+    config.appendChild(el('<div id="_bcVerBanner" style="display:none;background:#EAFBF8;border:1px solid #BFEFE8;border-radius:10px;padding:10px 12px;font-size:.82rem;color:#0A7A6E;margin-bottom:14px"></div>'));
     config.appendChild(el('<div id="_bcWho" style="font-size:.9rem;color:#5B5470;margin-bottom:16px"></div>'));
     config.appendChild(el(
       '<div id="_bcDates" style="display:none">'+
@@ -850,6 +932,7 @@ function BOOKMARKLET(){
       '<input id="_bcTo" type="text" readonly placeholder="gg/mm/aaaa" style="width:100%;padding:11px;border:1px solid #E7E3F3;border-radius:11px;font-size:1rem;cursor:pointer;background:#fff;caret-color:transparent">'+
       '<div id="_bcToCal" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid #E7E3F3;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:10px;margin-top:4px;width:230px"></div>'+
       '</div>'+
+      '<div id="_bcZipHint" style="display:none;font-size:.78rem;margin-top:2px"></div>'+
       '</div>'
     ));
     config.appendChild(el('<div style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
@@ -868,13 +951,14 @@ function BOOKMARKLET(){
     run.appendChild(el('<div id="_bcProg" style="display:none;margin-bottom:14px"><div id="_bcProgLab" style="font-size:11px;color:#8B80AE;margin-bottom:5px"><span class="spinner"></span>—</div><div class="prog-track"><div class="shine"></div><div id="_bcBar" style="background:linear-gradient(90deg,#FF7A59,#FF3D77);height:9px;border-radius:99px;width:0%;transition:width .3s;position:relative;z-index:1"></div></div></div>'));
     run.appendChild(el('<button id="_bcStop" style="width:100%;background:#F3F1FB;color:#5B4B9E;border:none;border-radius:11px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer">Ferma</button>'));
     run.appendChild(el('<button id="_bcCopyLog" style="width:100%;background:#fff;color:#5B4B9E;border:1px solid #E7E3F3;border-radius:11px;padding:9px;font-size:.82rem;font-weight:700;cursor:pointer;margin-top:8px">📋 Copia il registro (se qualcosa non ha funzionato)</button>'));
+    run.appendChild(el('<button id="_bcReportIssue" style="display:none;width:100%;background:#fff;color:#C4145A;border:1px solid #FFB3C6;border-radius:11px;padding:9px;font-size:.82rem;font-weight:700;cursor:pointer;margin-top:8px">🐛 Segnala un possibile problema del portale su GitHub</button>'));
     card.appendChild(run);
 
     ROOT_EL=root;
     root.appendChild(card); document.body.appendChild(root);
 
-    S.fromPicker=makeDatePicker("_bcFrom","_bcFromCal");
-    S.toPicker=makeDatePicker("_bcTo","_bcToCal");
+    S.fromPicker=makeDatePicker("_bcFrom","_bcFromCal",updateZipHint);
+    S.toPicker=makeDatePicker("_bcTo","_bcToCal",updateZipHint);
     S.fromPicker.setIso(keyOf(sd));
     S.toPicker.setIso(keyOf(td));
 
@@ -998,6 +1082,11 @@ function BOOKMARKLET(){
     }
 
     buildUI();
+    checkLatestVersion().then(function(latest){
+      if(!latest || latest<=parseInt(BM_VERSION,10)) return;
+      var b=document.getElementById("_bcVerBanner");
+      if(b){ b.style.display="block"; b.textContent="📣 È disponibile una versione più aggiornata dello strumento (v"+latest+", questa è v"+BM_VERSION+"). Non è urgente: quando vuoi, elimina questo segnalibro e trascina di nuovo il pulsante dalla pagina di Simone."; }
+    });
     if(!window.showDirectoryPicker){
       var warn=document.createElement("div");
       warn.style.cssText="background:#FFF3E0;border:1px solid #F5A524;border-radius:10px;padding:10px 12px;font-size:.82rem;color:#7A5B10;margin-bottom:14px";
@@ -1056,6 +1145,8 @@ function BOOKMARKLET(){
   if(location.protocol!=="file:"){
     var statusUrl=new URL("status.json", location.href).href;
     code=code.replace(/(STATUS_URL\s*=\s*")[^"]*(")/, "$1"+statusUrl+"$2");
+    var pageUrl=new URL("index.html", location.href).href;
+    code=code.replace(/(PAGE_URL\s*=\s*")[^"]*(")/, "$1"+pageUrl+"$2");
   }
   document.getElementById("bm").href="javascript:"+encodeURIComponent(code);
   document.getElementById("bm").addEventListener("click", function(e){
