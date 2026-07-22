@@ -800,14 +800,14 @@ function BOOKMARKLET(){
     document.getElementById("_bcRun").style.display=which==="progress"?"block":"none";
   }
 
-  // abilita/disabilita insieme il pulsante "Scegli cartella e avvia" e l'avviso sulla
+  // mostra/nasconde insieme il pulsante "Scegli cartella e avvia" e l'avviso sulla
   // cartella vuota: finché il bambino non è riconosciuto (o durante la ricerca), avviare
-  // non è possibile, quindi anche l'avviso relativo alla scelta della cartella resta sbiadito.
+  // non è possibile, quindi restano del tutto nascosti invece che solo sbiaditi.
   function setGoEnabled(ok){
     var goBtn=document.getElementById("_bcGo");
-    if(goBtn){ goBtn.disabled=!ok; goBtn.style.cursor=ok?"pointer":"default"; goBtn.style.opacity=ok?"1":".5"; }
+    if(goBtn){ goBtn.disabled=!ok; goBtn.style.display=ok?"block":"none"; }
     var warn=document.getElementById("_bcFolderWarn");
-    if(warn){ warn.style.opacity=ok?"1":".5"; }
+    if(warn){ warn.style.display=ok?"block":"none"; }
   }
 
   function schoolYearStart(){
@@ -935,8 +935,8 @@ function BOOKMARKLET(){
       '<div id="_bcZipHint" style="display:none;font-size:.78rem;margin-top:2px"></div>'+
       '</div>'
     ));
-    config.appendChild(el('<div id="_bcFolderWarn" style="font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0;opacity:.5"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
-    config.appendChild(el('<button id="_bcGo" disabled style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:default;opacity:.5">Scegli cartella e avvia</button>'));
+    config.appendChild(el('<div id="_bcFolderWarn" style="display:none;font-size:.82rem;color:#7A3B00;background:#FFF4E5;border:1.5px solid #FFD199;border-radius:9px;padding:12px 14px;margin:18px 0"><b style="display:block;font-size:.92rem;margin-bottom:5px">📁 Scegli una cartella VUOTA</b>Dedicata solo a queste foto, non Desktop/Documenti. <span style="color:#8B80AE">(Per gli aggiornamenti successivi, riusa la stessa: non sarà più vuota, va bene così)</span></div>'));
+    config.appendChild(el('<button id="_bcGo" disabled style="display:none;width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer">Scegli cartella e avvia</button>'));
     config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
     card.appendChild(config);
 
