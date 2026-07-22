@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scarica le foto · Casello dei Piccoli</title>
+<style>
+  :root{
+    --ink:#241C3B; --ink-soft:#5B5470; --paper:#F3F1FB; --card:#fff;
+    --line:#E7E3F3; --coral:#FF7A59; --pink:#FF3D77; --teal:#0FB5A6; --amber:#F5A524;
+    --grad:linear-gradient(120deg,#FF7A59 0%,#FF3D77 100%);
+    --shadow:0 10px 40px rgba(60,30,80,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px}
+
+  /* hero */
+  .hero{padding:72px 20px 40px;text-align:center;position:relative;overflow:hidden}
+  .kicker{display:inline-block;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);background:#fff;padding:6px 14px;border-radius:99px;box-shadow:var(--shadow);margin-bottom:22px}
+  .hero h1{font-size:clamp(2rem,6vw,3.1rem);font-weight:800;letter-spacing:-1px;line-height:1.1;max-width:640px;margin:0 auto 16px}
+  .hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{font-size:1.12rem;color:var(--ink-soft);max-width:520px;margin:0 auto}
+
+  /* the drag card — signature element */
+  .grab{max-width:520px;margin:36px auto 8px;background:var(--card);border-radius:22px;box-shadow:var(--shadow);padding:26px;text-align:center;border:2px dashed #F5C2D6}
+  .grab .hint{font-size:.95rem;color:var(--ink);font-weight:700;margin-bottom:16px}
+  .bm{display:inline-flex;align-items:center;gap:10px;background:var(--grad);color:#fff;padding:15px 26px 15px 18px;border-radius:14px;font-size:1.05rem;font-weight:700;text-decoration:none;cursor:grab;user-select:none;box-shadow:0 10px 26px rgba(255,61,119,.38);transition:transform .18s,box-shadow .18s;position:relative;animation:wiggle 2.5s ease-in-out infinite}
+  .bm:active{cursor:grabbing;animation:none}
+  .bm:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(255,61,119,.46);animation:none}
+  .bm .ic{font-size:1.2rem}
+  .bm .grip{font-size:1.3rem;opacity:.85;letter-spacing:-2px}
+  .grab .drag{margin-top:16px;font-size:.82rem;color:#B4A9CC;display:flex;align-items:center;justify-content:center;gap:8px}
+  .arrow{animation:up 1s ease-in-out infinite alternate;font-size:1.1rem}
+  @keyframes up{from{transform:translateY(2px)}to{transform:translateY(-5px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:11px;height:11px;border:2px solid #E7E3F3;border-top-color:#FF3D77;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+  @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(220%)}}
+  .prog-track{background:#EDE9F7;border-radius:99px;height:9px;position:relative;overflow:hidden}
+  .prog-track .shine{position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,61,119,.35),transparent);animation:shimmer 1.3s linear infinite;z-index:0}
+  @keyframes wiggle{0%,85%,100%{transform:translateX(0) rotate(0)}88%{transform:translateX(-3px) rotate(-2deg)}91%{transform:translateX(3px) rotate(2deg)}94%{transform:translateX(-2px) rotate(-1deg)}}
+
+  /* donazioni */
+  .donate{max-width:520px;margin:40px auto 0;text-align:center;padding:26px;background:var(--card);border-radius:22px;border:1px solid var(--line);box-shadow:0 3px 16px rgba(60,30,80,.05)}
+  .donate h3{font-size:1.05rem;margin-bottom:6px}
+  .donate p{font-size:.9rem;color:var(--ink-soft);margin-bottom:18px}
+  .donate-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .donate-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#F7F5FD;border:1px solid var(--line);border-radius:14px;padding:12px 10px;text-decoration:none;color:var(--ink);font-weight:700;transition:transform .15s,background .15s;flex:1 1 0;max-width:150px;text-align:center}
+  .donate-btn:hover{background:#FFF0F4;transform:translateY(-2px)}
+  .donate-btn .em{font-size:1.4rem}
+  .donate-btn .price{font-size:.85rem;color:var(--pink)}
+  .donate-btn .lbl{font-size:.72rem;color:var(--ink-soft);font-weight:600}
+
+  /* steps */
+  .steps{margin:50px 0 10px}
+  .steps h2{font-size:1.4rem;font-weight:800;margin-bottom:6px}
+  .steps .sub{color:var(--ink-soft);margin-bottom:26px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-bottom:14px;display:flex;gap:18px;align-items:flex-start;box-shadow:0 3px 16px rgba(60,30,80,.05)}
+  .n{flex-shrink:0;width:38px;height:38px;border-radius:12px;background:var(--grad);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:1.05rem}
+  .step h3{font-size:1.02rem;margin-bottom:5px}
+  .step p{font-size:.95rem;color:var(--ink-soft)}
+  kbd{background:#F3F1FB;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-size:.82em;font-family:ui-monospace,monospace;color:var(--ink)}
+  code{background:#F3F1FB;padding:2px 7px;border-radius:6px;font-size:.85em;font-family:ui-monospace,monospace;color:#8B2FB0}
+
+  /* info cards */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 24px;margin-bottom:14px;box-shadow:0 3px 16px rgba(60,30,80,.05)}
+  .card.tint{border-left:4px solid var(--teal)}
+  .card.warn{border-left:4px solid var(--amber);background:#FFFBF2}
+  .card h3{font-size:1.02rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .card p{font-size:.94rem;color:var(--ink-soft)}
+  .fname{display:inline-block;background:#241C3B;color:#FFD9E4;font-family:ui-monospace,monospace;font-size:.84rem;padding:8px 12px;border-radius:9px;margin-top:10px;word-break:break-all}
+
+  .faq{margin-top:36px}
+  .faq h2{font-size:1.4rem;font-weight:800;margin-bottom:18px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:2px 20px;margin-bottom:10px}
+  summary{font-weight:600;padding:15px 0;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'+';font-size:1.4rem;color:var(--pink);font-weight:400}
+  details[open] summary::after{content:'–'}
+  details p{padding:0 0 16px;color:var(--ink-soft);font-size:.93rem}
+
+  footer{text-align:center;color:#B4A9CC;font-size:.82rem;padding:40px 20px 60px}
+  @media (max-width:560px){.step{padding:18px}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <span class="kicker">Il Casello dei Piccoli · Per i genitori</span>
+  <h1>Salva tutte le foto dei tuoi figli al <em>Casello dei Piccoli</em></h1>
+  <p>Uno strumento che scarica sul tuo computer le foto dei tuoi bambini dal portale della scuola, con la data giusta già dentro ogni foto.</p>
+  <p style="font-size:1.3rem;font-weight:800;color:var(--ink);margin-top:18px">❤️ Sviluppato con amore da Simone, papà di Sole.</p>
+
+  <div class="grab">
+    <div class="hint">👇 NON cliccare: trascina questo pulsante nella barra dei preferiti 👇</div>
+    <a id="bm" class="bm" href="#"><span class="grip">⠿</span><span class="ic">📸</span> Scarica foto scuola</a>
+    <div class="drag"><span class="arrow">↥</span> tienilo premuto e portalo in alto</div>
+    <div style="margin-top:14px;font-size:.78rem;color:#B4A9CC">Versione più recente di questa pagina: <b id="_bcLandingVer" style="color:var(--ink-soft)">…</b> — <a href="#versione" style="color:var(--pink);text-decoration:underline">come faccio a sapere se ho l'ultima?</a></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="steps">
+    <h2>Come si usa</h2>
+    <p class="sub">Serve un computer con <strong>Chrome</strong> o <strong>Edge</strong> (funziona anche su altri browser, ma con qualche limite: vedi sotto). Dal telefono non funziona.</p>
+
+    <div class="step">
+      <div class="n">1</div>
+      <div>
+        <h3>Mostra la barra dei preferiti</h3>
+        <p>Se non la vedi sotto la barra degli indirizzi: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (su Mac <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">2</div>
+      <div>
+        <h3>Trascina lassù il pulsante rosa</h3>
+        <p>Prendi il pulsante “Scarica foto scuola” qui sopra e trascinalo nella barra dei preferiti. Lo aggiungi una volta sola.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">3</div>
+      <div>
+        <h3>Apri BabyConnect e fai accesso</h3>
+        <p>Vai su <strong>app.babyconnect.it</strong> e fai accesso. Non serve aprire nessuna pagina in particolare: lo strumento riconosce da solo il tuo bambino (ci mette qualche secondo).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">4</div>
+      <div>
+        <h3>Clicca il preferito e scegli il periodo</h3>
+        <p>Clicca <strong>“Scarica foto scuola”</strong> nella barra dei preferiti. Si apre un pannello: scegli da quando a quando scaricare (parte già impostato su tutto l’anno scolastico), poi scegli una <strong>cartella vuota</strong> dedicata solo a queste foto e avvia. Lo strumento leggerà e scriverà solo lì dentro, mai altrove sul tuo computer.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="card warn">
+    <h3>⏳ La prima volta ci mette un po’</h3>
+    <p>Il sito della scuola è lento a fornire i giorni, quindi la <strong>prima</strong> scansione di un intero anno può durare diversi minuti: lascia la finestra aperta e fai altro. Lo strumento si ricorda cosa ha già scaricato: le <strong>volte successive</strong> (es. a fine mese) scarica solo le foto nuove, in pochi secondi.</p>
+  </div>
+
+  <div class="card warn">
+    <h3>🌐 Meglio Chrome o Edge</h3>
+    <p>Con <strong>Chrome</strong> o <strong>Edge</strong> lo strumento salva le foto <strong>direttamente nella cartella che scegli</strong>, mano a mano che le scarica, e si ricorda cosa ha già preso: i rilanci successivi sono velocissimi.</p>
+    <p style="margin-top:10px">Con <strong>altri browser</strong> (es. Safari, Firefox) funziona lo stesso, ma in modo più semplice: alla fine ricevi <strong>un unico file ZIP</strong> da estrarre, e ogni volta si riparte da capo senza ricordare cosa era già stato scaricato. Per non rischiare di sovraccaricare la memoria del browser, in questa modalità il periodo scelto non può superare <strong>40 giorni feriali (circa 8 settimane)</strong>: per l’intero anno scolastico serve Chrome o Edge.</p>
+  </div>
+
+  <div class="card tint">
+    <h3>🗂 Come vengono salvate</h3>
+    <p>Tutte le foto finiscono nella stessa cartella che scegli tu, senza sottocartelle. Il nome contiene data, nome dell’attività e codice foto, così si ordinano da sole:</p>
+    <span class="fname">2026-07-17 - Attività Grafiche pittoriche - IMG_20260717_104444_385.jpg</span>
+    <p style="margin-top:10px">La data e l’ora reali vengono anche scritte nei <strong>metadati</strong> della foto, così restano corrette in Google Foto, Foto di Apple e simili.</p>
+  </div>
+
+  <div class="card">
+    <h3>🔒 Resta tutto sul tuo computer</h3>
+    <p>Le foto vengono prese usando l’accesso che hai già fatto tu e salvate direttamente sul tuo computer, solo dentro la cartella che scegli tu. Non passano da nessun sito esterno, non viene inviato niente a terzi, non serve installare nulla né creare account.</p>
+  </div>
+
+  <div class="card tint" id="versione">
+    <h3>🔄 Come funzionano gli aggiornamenti</h3>
+    <p>Il pulsante che trascini nei preferiti non è un link a questa pagina: quando lo trascini, il browser <strong>copia tutto il funzionamento dello strumento dentro il segnalibro stesso</strong>, in quel preciso momento. Da lì in poi il segnalibro vive per conto suo: se in futuro questa pagina viene migliorata o corretta, il tuo segnalibro <strong>non si aggiorna da solo</strong>, nemmeno se la ricarichi. Resta congelato alla versione che avevi quando l’hai trascinato.</p>
+    <p style="margin-top:10px">Per questo ogni versione ha un numero, mostrato qui sopra (accanto al pulsante) e anche in alto a destra nel pannello quando lo apri, tipo <span class="fname" style="padding:2px 8px;font-size:.82em">v6</span>. Se il numero che vedi <strong>aprendo il pannello</strong> è più basso di quello mostrato su questa pagina, vuol dire che hai una versione vecchia.</p>
+    <p style="margin-top:10px"><strong>Per aggiornarti:</strong> elimina il vecchio segnalibro dalla barra dei preferiti (clic destro su di esso → Elimina, o trascinalo fuori dalla barra) e trascina di nuovo il pulsante rosa qui sopra. Ci vogliono 10 secondi e non perdi nulla: le foto già scaricate e il promemoria nella cartella restano intatti.</p>
+  </div>
+
+  <section class="faq">
+    <h2>Domande frequenti</h2>
+
+    <details>
+      <summary>Non riesco a trascinare il pulsante</summary>
+      <p>Controlla che la barra dei preferiti sia visibile (Passo 1). Da telefono o tablet non funziona: serve un computer con Chrome o Edge.</p>
+    </details>
+
+    <details>
+      <summary>Dice che non riconosce il bambino</summary>
+      <p>Aspetta qualche secondo: il sito della scuola può essere lento a rispondere. Se dopo un po’ ancora non ci riesce, il pannello ti fa scrivere a mano il codice del bambino, che puoi chiedere alla scuola.</p>
+    </details>
+
+    <details>
+      <summary>Posso scegliere solo un certo periodo?</summary>
+      <p>Sì. Se BabyConnect ha più di un anno scolastico per il tuo bambino, prima scegli quale (dal menu “Anno scolastico”): le date si adattano da sole a quell’anno, dal 1° settembre al 31 luglio, e non puoi uscirne per sbaglio. Dentro quei limiti puoi restringere il periodo come vuoi, ad esempio per scaricare solo un mese. Sabato e domenica vengono saltati in automatico.</p>
+    </details>
+
+    <details>
+      <summary>Se lo rilancio, riscarica tutto da capo?</summary>
+      <p>No, se scegli la <strong>stessa cartella</strong>. Lo strumento tiene un piccolo file promemoria dentro la cartella e le volte dopo controlla solo i giorni nuovi, senza riscaricare le foto già presenti. (Questa memoria funziona su Chrome ed Edge; con il salvataggio in ZIP invece riparte ogni volta.)</p>
+    </details>
+
+    <details>
+      <summary>Ho più di un figlio</summary>
+      <p>Lo strumento se ne accorge da solo e ti fa scegliere da un unico menu, con voci tipo “Nome Cognome — 2025/2026”. Questa parte non è stata ancora testata a fondo: dovrebbe funzionare, ma se qualcosa non torna scrivimi. Il download resta uno alla volta; puoi ripetere la procedura per l’altro figlio usando la stessa cartella o una diversa.</p>
+    </details>
+
+    <details>
+      <summary>Le foto hanno la data giusta?</summary>
+      <p>Sì. La data e l’ora vengono lette dal nome originale della foto e scritte nei suoi metadati, oltre a comparire all’inizio del nome del file.</p>
+    </details>
+
+    <details>
+      <summary>Qualcosa non ha funzionato, come lo segnalo?</summary>
+      <p>Nel pannello, durante o dopo il download, c’è un bottone <strong>“📋 Copia il registro”</strong>: copia tutto quello che è successo. Incollalo in un messaggio a chi ti ha condiviso questo strumento (o a Simone, vedi in cima alla pagina), così è più facile capire cosa è andato storto.</p>
+    </details>
+  </section>
+
+  <div class="donate">
+    <h3>☕ Ti è stato utile?</h3>
+    <p>Questo strumento è e resterà sempre gratuito. Se ti ha risparmiato del tempo e ti va di ringraziare con un piccolo gesto, è benvenuto — ma non è richiesto in nessun modo.</p>
+    <div class="donate-row">
+      <a class="donate-btn" href="https://paypal.me/simoneconti84/1EUR" target="_blank" rel="noopener"><span class="em">☕</span><span class="price">1€</span><span class="lbl">Caffè</span></a>
+      <a class="donate-btn" href="https://paypal.me/simoneconti84/2EUR" target="_blank" rel="noopener"><span class="em">🥛</span><span class="price">2€</span><span class="lbl">Cappuccino di soia</span></a>
+      <a class="donate-btn" href="https://paypal.me/simoneconti84/3EUR" target="_blank" rel="noopener"><span class="em">🍊</span><span class="price">3€</span><span class="lbl">Spremuta d'arancia</span></a>
+    </div>
+  </div>
+
+</main>
+
+<footer>Strumento gratuito per genitori · nessun account, nessuna installazione, nessun dato inviato all’esterno</footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+//  BOOKMARKLET — scritto come funzione, poi serializzato nell'href del pulsante.
+//  Gira SOLO su app.babyconnect.it, usando la sessione (cookie) dell'utente.
+//  Meccanica: per ogni giorno feriale del periodo -> fetch pagina-giorno ->
+//  estrai id attivita -> per ogni id fetch DettaglioAttivitaEducativa (veloce:
+//  titolo attivita + foto full-res insieme) -> scrivi EXIF dalla data nel nome
+//  file, salva TUTTO nella stessa cartella col titolo vero come nome evento.
+//  Sync incrementale via file promemoria _stato-<childId>.json.
+//
+//  PERCHÉ È FATTO COSÌ (riassunto — dettagli completi in CLAUDE.md nel repo):
+//  - Non esiste un'API JSON leggera per il portale: la pagina-giorno
+//    (ActivityTimeline/{childId}/gg/mm/aaaa) è LENTA (~27-33s) perché il server
+//    la genera al volo; è inevitabile, non è un bug nostro. DettaglioAttivitaEducativa
+//    invece è velocissimo (~75ms): per questo la discovery usa la pagina-giorno
+//    solo per scoprire gli ID, e il download vero passa da Dettaglio.
+//  - Il GUID nel path della foto è per-GALLERIA, non per-foto (più foto della
+//    stessa attività condividono lo stesso GUID): per questo il nome file finale
+//    usa il nome file ORIGINALE della foto (col suo timestamp) come parte finale,
+//    mai il GUID, altrimenti si sovrascriverebbero a vicenda.
+//  - Ogni anno scolastico ha un childId DIVERSO per lo stesso bambino (stesso
+//    nome, id diverso): vanno raggruppati per nome, mai per id, altrimenti un
+//    bambino con più anni sembra un fratello diverso.
+//  - Il token XSRF si legge dal cookie XSRF-TOKEN (leggibile da JS) e si manda
+//    come header x-xsrf-token sulle chiamate XHR-style; verificato necessario
+//    solo per alcune chiamate ma inviato sempre per sicurezza.
+//  - idsForDay distingue ESPLICITAMENTE "fetch fallito" da "fetch riuscito con
+//    zero attività": solo il secondo caso va segnato come "analizzato" nel
+//    promemoria. Se si confondono i due casi, un fallimento temporaneo (rete,
+//    sessione scaduta) fa sì che quel giorno non venga MAI PIÙ ritentato,
+//    silenziosamente, senza che l'utente se ne accorga (bug reale, corretto in v10).
+//  - Il calendario è scritto da zero (non <input type="date"> nativo) perché il
+//    formato/lingua del picker nativo segue il sistema dell'utente, non la
+//    pagina: impossibile garantire gg/mm/aaaa in italiano altrimenti.
+//  - ZIP_MAX_WEEKDAYS esiste solo perché in modalità ZIP (browser senza
+//    showDirectoryPicker) tutte le foto restano in RAM fino alla fine; in
+//    modalità cartella (Chrome/Edge) si scrive su disco mano a mano, nessun
+//    limite necessario lì.
+// ════════════════════════════════════════════════════════════════════════════
+function BOOKMARKLET(){
+  "use strict";
+  if(document.getElementById("_bcRoot")) return;
+  var BM_VERSION="10";
+
+  var CDN_PIEXIF="https://unpkg.com/piexifjs@1.0.6/piexif.js";
+  var CDN_JSZIP ="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+
+  var CONC={discovery:5, download:5};        // fisso per tutti: nessuna scelta da fare
+  var RECHECK_DAYS=7;                        // ricontrolla gli ultimi giorni (upload in ritardo)
+  var ZIP_MAX_WEEKDAYS=40;                   // limite di sicurezza in modalità ZIP (~2 mesi): niente cartella su disco, tutto resta in memoria
+  var STATUS_URL="https://babyconnect-photo-downloader.simoneconti.dev/status.json";
+
+  // interruttore remoto: controllato ad ogni lancio, PRIMA di toccare BabyConnect.
+  // fail-closed: se il controllo stesso fallisce (rete, file assente, JSON non valido),
+  // ci si comporta come se fosse disattivato, per non rischiare di sovraccaricare
+  // il sito della scuola quando non siamo sicuri dello stato.
+  async function checkKillSwitch(){
+    try{
+      var r=await fetch(STATUS_URL+"?t="+Date.now(), {cache:"no-store"});
+      if(!r.ok) return {enabled:false, message:null};
+      var j=await r.json();
+      if(j && j.enabled===true) return {enabled:true, message:j.message||null};
+      return {enabled:false, message:(j && j.message) ? j.message : null};
+    }catch(e){ return {enabled:false, message:null}; }
+  }
+  function showPausedScreen(message){
+    if(document.getElementById("_bcRoot")) return;
+    var root=el('<div id="_bcRoot" style="position:fixed;inset:0;background:rgba(30,15,45,.62);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif"></div>');
+    var card=el('<div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:90%;text-align:center;box-shadow:0 30px 70px rgba(0,0,0,.4)"></div>');
+    card.appendChild(el('<div style="font-size:2rem;margin-bottom:10px">⏸️</div>'));
+    card.appendChild(el('<div style="font-size:1.05rem;font-weight:800;color:#241C3B;margin-bottom:10px">Strumento momentaneamente sospeso</div>'));
+    card.appendChild(el('<div style="font-size:.92rem;color:#5B5470;margin-bottom:20px">'+escapeHtml(message)+'</div>'));
+    var btn=el('<button style="background:#F3F1FB;color:#5B4B9E;border:none;border-radius:11px;padding:12px 24px;font-size:.95rem;font-weight:700;cursor:pointer">Chiudi</button>');
+    btn.onclick=function(){ root.remove(); };
+    card.appendChild(btn);
+    root.appendChild(card);
+    document.body.appendChild(root);
+  }
+
+  var S={running:false, stop:false, fsaDir:null, zip:null, childId:null,
+         stato:{scannedDays:{}, savedPhotos:{}}, seen:{}, total:0, skipped:0};
+  var ROOT_EL=null;
+
+  // ── utility ────────────────────────────────────────────────────────────────
+  function loadScript(u){return new Promise(function(res,rej){var s=document.createElement("script");s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  function pad(n){return (n<10?"0":"")+n;}
+  function keyOf(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function sanitize(s){return String(s).replace(/[\\/:*?"<>|\u0000-\u001F]/g,"_").replace(/\s+/g," ").trim();}
+  function titleCase(s){return String(s).toLowerCase().replace(/(^|[\s\-'])([a-zà-ÿ])/g,function(m,sep,c){return sep+c.toUpperCase();});}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});}
+  function fileName(u){return decodeURIComponent(u.split("/").pop().split("?")[0]);}
+  function stemExt(name){var i=name.lastIndexOf(".");return i<0?[name,""]:[name.slice(0,i),name.slice(i+1)];}
+  // token antiforgery (cookie leggibile da JS, pattern ASP.NET Core) per le chiamate XHR
+  function readXsrf(){var m=document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]+)/);return m?decodeURIComponent(m[1]):"";}
+  function xhrHeaders(){var h={"x-requested-with":"XMLHttpRequest"};var x=readXsrf();if(x)h["x-xsrf-token"]=x;return h;}
+
+  // data/ora dal nome file (IMG/VID_AAAAMMGG_HHMMSS), fallback: data nel path GG-MM-AAAA
+  function whenOf(u){
+    var f=u.match(/(?:IMG|VID)[_-]?(\d{4})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/);
+    if(f) return {date:f[1]+"-"+f[2]+"-"+f[3], exif:f[1]+":"+f[2]+":"+f[3]+" "+f[4]+":"+f[5]+":"+f[6]};
+    var p=u.match(/\/(\d{2})-(\d{2})-(\d{4})\//);
+    if(p) return {date:p[3]+"-"+p[2]+"-"+p[1], exif:p[3]+":"+p[2]+":"+p[1]+" 12:00:00"};
+    return {date:"data-sconosciuta", exif:null};
+  }
+  // categoria = segmento dopo la data GG-MM-AAAA nel path resources/Routines/...
+  function eventOf(u){
+    var m=u.match(/\/\d{2}-\d{2}-\d{4}\/([^\/]+)\//);
+    if(m) return decodeURIComponent(m[1]);
+    var m2=u.match(/\/resources\/Routines\/[^\/]+\/[^\/]+\/[^\/]+\/([^\/]+)\//i);
+    return m2?decodeURIComponent(m2[1]):"FOTO";
+  }
+  // nome file finale, piatto: "AAAA-MM-GG - Evento - idFoto.ext"
+  function targetName(u,ev){
+    var w=whenOf(u), evc=sanitize(ev||eventOf(u)||"FOTO"), se=stemExt(fileName(u));
+    return sanitize(w.date+" - "+evc+" - "+se[0])+(se[1]?"."+se[1].toLowerCase():"");
+  }
+
+  function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+  async function getText(u,opts,tries){
+    tries=tries||2;
+    for(var t=0;t<tries;t++){
+      try{ var r=await fetch(u,Object.assign({credentials:"include"},opts||{})); if(r.ok) return await r.text(); }
+      catch(e){}
+      if(t<tries-1) await sleep(600);
+    }
+    return null;
+  }
+
+  // Uint8Array <-> binary string (a blocchi, per non far esplodere lo stack)
+  function u8ToBin(u8){var s="",CH=0x8000;for(var i=0;i<u8.length;i+=CH){s+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));}return s;}
+  function binToU8(b){var u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i)&0xff;return u;}
+  function addExif(u8,name,exifStr){
+    if(!exifStr||typeof piexif==="undefined"||!/\.jpe?g$/i.test(name)) return u8;
+    try{
+      var bin=u8ToBin(u8), o={"0th":{},"Exif":{},"GPS":{}};
+      o["0th"][piexif.ImageIFD.DateTime]=exifStr;
+      o["Exif"][piexif.ExifIFD.DateTimeOriginal]=exifStr;
+      o["Exif"][piexif.ExifIFD.DateTimeDigitized]=exifStr;
+      return binToU8(piexif.insert(piexif.dump(o),bin));
+    }catch(e){ return u8; }
+  }
+
+  // pool di concorrenza
+  async function pool(items,limit,worker,onProg){
+    var i=0,done=0;
+    async function run(){
+      while(i<items.length && !S.stop){
+        var idx=i++;
+        try{ await worker(items[idx],idx); }catch(e){}
+        done++; if(onProg) onProg(done,items.length);
+      }
+    }
+    var r=[]; for(var k=0;k<Math.min(limit,items.length);k++) r.push(run());
+    await Promise.all(r);
+  }
+
+  // ── rilevamento childId + nome + anno scolastico ──────────────────────────────
+  // Unico percorso, sempre uguale: chiediamo in background (fetch, senza mai
+  // navigare) la pagina "Report Giornaliero", leggiamo il campo nascosto "Figli"
+  // (id selezionato) e, dallo stesso blocco dati, l'elenco dei figli disponibili
+  // con, per ciascuno, i diversi anni scolastici (ognuno ha un id proprio).
+  function extractBalanced(s, startIdx, openCh, closeCh){
+    var depth=0, i=startIdx;
+    for(; i<s.length; i++){
+      if(s[i]===openCh) depth++;
+      else if(s[i]===closeCh){ depth--; if(depth===0) return s.slice(startIdx, i+1); }
+    }
+    return null;
+  }
+  function splitTopLevelObjects(s){
+    var out=[], depth=0, start=-1;
+    for(var i=0;i<s.length;i++){
+      if(s[i]==="{"){ if(depth===0) start=i; depth++; }
+      else if(s[i]==="}"){ depth--; if(depth===0) out.push(s.slice(start,i+1)); }
+    }
+    return out;
+  }
+  function getNestedObj(obj, key){
+    var p=obj.indexOf('"'+key+'":{');
+    if(p<0) return null;
+    var start=obj.indexOf("{", p);
+    return extractBalanced(obj, start, "{", "}");
+  }
+  function firstLevelFields(obj){
+    var cut=obj.length;
+    ["Genitore","Frequenza","Sezione","TipoUtente"].forEach(function(k){
+      var p=obj.indexOf('"'+k+'":{'); if(p>=0 && p<cut) cut=p;
+    });
+    var head=obj.slice(0,cut);
+    var id=head.match(/"Id"\s*:\s*(\d+)/);
+    var nome=head.match(/"Nome"\s*:\s*"([^"]+)"/);
+    var cognome=head.match(/"Cognome"\s*:\s*"([^"]+)"/);
+    var anno=null, isCurrent=false;
+    var annoObj=getNestedObj(obj, "AnnoScolastico");
+    if(annoObj){
+      var am=annoObj.match(/"Anno"\s*:\s*"([^"]+)"/); anno=am?am[1]:null;
+      var cm=annoObj.match(/"IsCurrent"\s*:\s*(true|false)/); isCurrent=cm?cm[1]==="true":false;
+    }
+    return { id: id?id[1]:null, nome: nome?titleCase(nome[1]):"", cognome: cognome?titleCase(cognome[1]):"", anno:anno, isCurrent:isCurrent };
+  }
+  // elenco delle persone distinte (per nome), ognuna con l'elenco dei suoi anni scolastici disponibili
+  function parseChildren(html){
+    var idx=html.indexOf("kendoDropDownList(");
+    if(idx<0) return [];
+    var chunk=html.slice(idx, idx+60000);
+    var dsIdx=chunk.indexOf('"dataSource":[');
+    if(dsIdx<0) return [];
+    var arrStart=chunk.indexOf("[", dsIdx);
+    var arr=extractBalanced(chunk, arrStart, "[", "]");
+    if(!arr) return [];
+    var raw=splitTopLevelObjects(arr).map(firstLevelFields).filter(function(c){ return c.id; });
+    var byName={}, order=[];
+    raw.forEach(function(c){
+      var full=(c.nome+" "+c.cognome).trim(); // ordine: Nome Cognome
+      if(!full) return;
+      var key=full.toUpperCase();
+      if(!byName[key]){ byName[key]={name:full, years:[]}; order.push(key); }
+      byName[key].years.push({id:c.id, anno:c.anno, isCurrent:c.isCurrent});
+    });
+    return order.map(function(k){ return byName[k]; });
+  }
+  // "2025/2026" -> dal 1 settembre 2025 al 31 luglio 2026 (limiti del selettore date)
+  function yearBounds(annoStr){
+    var m=(annoStr||"").match(/(\d{4})\D+(\d{4})/);
+    if(!m) return null;
+    return { min:m[1]+"-09-01", max:m[2]+"-07-31" };
+  }
+  async function detectChildId(){
+    try{
+      var html=await getText("/Parent/ActivityTimeline");
+      if(!html) return {id:null, name:null, persons:[]};
+      var doc=new DOMParser().parseFromString(html,"text/html");
+      var f=doc.getElementById("Figli") || doc.querySelector('input[name="Figli"]');
+      var activeId=(f && /^\d+$/.test((f.value||"").trim())) ? f.value.trim() : null;
+      if(!activeId){ var m=html.match(/ActivityTimeline\/(\d+)\/\d+\/\d+\/\d+/); if(m) activeId=m[1]; }
+      var persons=parseChildren(html);
+      var activeName=null;
+      persons.forEach(function(p){
+        p.years.forEach(function(y){ if(y.id===activeId) activeName=p.name; });
+      });
+      if(!activeId && persons.length===1 && persons[0].years.length){
+        var y0=persons[0].years.filter(function(y){return y.isCurrent;})[0] || persons[0].years[0];
+        activeId=y0.id; activeName=persons[0].name;
+      }
+      return {id:activeId, name:activeName, persons:persons};
+    }catch(e){ return {id:null, name:null, persons:[]}; }
+  }
+
+  // ── manifest (solo con cartella FSA) ─────────────────────────────────────────
+  function manifestName(){ return "_stato-"+S.childId+".json"; }
+  async function loadManifest(){
+    if(!S.fsaDir) return;
+    try{
+      var fh=await S.fsaDir.getFileHandle(manifestName(),{create:false});
+      var t=await (await fh.getFile()).text(); var j=JSON.parse(t);
+      S.stato.scannedDays=j.scannedDays||{}; S.stato.savedPhotos=j.savedPhotos||{};
+      var n=Object.keys(S.stato.scannedDays).length;
+      if(n) log("↺ Promemoria trovato: "+n+" giorni già analizzati in passato.");
+    }catch(e){ /* prima volta */ }
+  }
+  async function saveManifest(){
+    if(!S.fsaDir) return;
+    try{
+      var fh=await S.fsaDir.getFileHandle(manifestName(),{create:true});
+      var w=await fh.createWritable(); await w.write(JSON.stringify(S.stato)); await w.close();
+    }catch(e){ log("⚠ non riesco a salvare il promemoria: "+e.message); }
+  }
+  async function fileExists(name){
+    if(!S.fsaDir) return false;
+    try{ await S.fsaDir.getFileHandle(name,{create:false}); return true; }catch(e){ return false; }
+  }
+
+  // ── discovery: id gallerie di un giorno ──────────────────────────────────────
+  async function idsForDay(d){
+    var url="/Parent/ActivityTimeline/"+S.childId+"/"+d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
+    var html=await getText(url);
+    if(html===null) return {ok:false, ids:[]}; // richiesta fallita: NON è lo stesso di "nessuna attività quel giorno"
+    var ids={},out=[],re=/(?:showDetails|openGallery)\((\d+)\)/g,m;
+    while((m=re.exec(html))){ if(!ids[m[1]]){ids[m[1]]=1;out.push(m[1]);} }
+    return {ok:true, ids:out};
+  }
+
+  // ── download di un'attività: titolo + foto full-res in un'unica chiamata ──────
+  async function grabActivity(id){
+    var html=await getText("/Parent/ActivityTimeline/DettaglioAttivitaEducativa/"+id,{headers:xhrHeaders()}); if(!html) return;
+    var title="", imgs=[];
+    try{
+      var doc=new DOMParser().parseFromString(html,"text/html");
+      var t=doc.querySelector(".titleDet"); if(t) title=t.textContent.trim();
+      doc.querySelectorAll("img").forEach(function(im){ var s=im.getAttribute("src")||""; if(/resources\/Routines\//i.test(s)) imgs.push(s); });
+    }catch(e){}
+    if(!imgs.length){ imgs=html.match(/resources\/Routines\/[^"'\s)\\<>]+\.(?:jpe?g|png|gif|webp|mp4|mov|m4v|webm)/gi)||[]; }
+    for(var i=0;i<imgs.length;i++){
+      if(S.stop) return;
+      var u="/"+imgs[i].replace(/^\/+/,"");
+      var name=targetName(u,title);
+      if(S.seen[name]) continue; S.seen[name]=1;
+      if(S.stato.savedPhotos[name] || await fileExists(name)){ S.stato.savedPhotos[name]=1; S.skipped++; setCount(); continue; }
+      try{ await saveImage(u,name); }catch(e){ log("  ⚠ "+name+": "+e.message); }
+    }
+  }
+  async function saveImage(u,name){
+    var res=await fetch(u,{credentials:"include"}); if(!res.ok) throw new Error("HTTP "+res.status);
+    var u8=new Uint8Array(await res.arrayBuffer());
+    u8=addExif(u8,name,whenOf(u).exif);
+    if(S.fsaDir){
+      var fh=await S.fsaDir.getFileHandle(name,{create:true});
+      var w=await fh.createWritable(); await w.write(u8); await w.close();
+    }else{
+      S.zip.file(name,u8);
+    }
+    S.stato.savedPhotos[name]=1; S.total++; setCount();
+  }
+
+  // ── flusso principale ────────────────────────────────────────────────────────
+  async function start(cfg){
+    S.running=true; S.stop=false;
+    showPanel("progress");
+
+    // 1) destinazione
+    if(window.showDirectoryPicker){
+      try{
+        log("📁 Scegli la cartella dove salvare le foto…");
+        S.fsaDir=await window.showDirectoryPicker({mode:"readwrite",startIn:"pictures",id:"babyconnect-foto"});
+        log("✓ Salvo direttamente nella cartella scelta.");
+      }catch(e){ log("  (nessuna cartella scelta)"); finish("error"); return; }
+    }
+    if(!S.fsaDir){
+      if(typeof JSZip==="undefined"){ log("⚠ Questo browser non permette il salvataggio in cartella e lo ZIP non è disponibile. Usa Chrome o Edge."); finish("error"); return; }
+      S.zip=new JSZip(); log("📦 Modalità ZIP: tutte le foto in un unico file da estrarre alla fine, senza promemoria per le volte successive. Per l'esperienza completa usa Chrome o Edge.");
+    }
+
+    await loadManifest();
+
+    // 2) elenco giorni feriali nel periodo
+    var start=cfg.from, end=cfg.to, dayList=[];
+    for(var d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+      var wd=d.getDay();
+      if(wd===0||wd===6) continue; // sabato e domenica sempre saltati
+      dayList.push(new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0));
+    }
+    log("📅 Periodo: "+keyOf(start)+" → "+keyOf(end)+"  ("+dayList.length+" giorni feriali)");
+
+    // 3) quali giorni analizzare davvero (salta i passati già visti, ricontrolla gli ultimi)
+    var today=new Date(); today.setHours(12,0,0,0);
+    var toScan=[], cached=0;
+    for(var j=0;j<dayList.length;j++){
+      var k=keyOf(dayList[j]);
+      var recent=(today-dayList[j])/86400000 < RECHECK_DAYS;
+      if((k in S.stato.scannedDays) && !recent) cached++;
+      else toScan.push(dayList[j]);
+    }
+    if(cached) log("↺ "+cached+" giorni già analizzati in passato: li salto.");
+
+    // 4) DISCOVERY
+    if(toScan.length){
+      log("🔎 Analizzo "+toScan.length+" giorni per trovare le foto… (il sito è lento, abbi pazienza)");
+      prog("Giorni analizzati",0,toScan.length,null);
+      var t0=Date.now(), completed=0, falliti=0;
+      await pool(toScan,CONC.discovery,async function(dd){
+        var r=await idsForDay(dd);
+        if(r.ok){ S.stato.scannedDays[keyOf(dd)]=r.ids; }
+        else { falliti++; } // non segnato come analizzato: verrà riprovato al prossimo lancio
+      },function(done,tot){
+        completed=done;
+        var avg=(Date.now()-t0)/done;
+        var etaMs=avg*(tot-done);
+        prog("Giorni analizzati",done,tot,etaMs);
+      });
+      if(falliti>0) log("⚠ "+falliti+" giorni non hanno risposto e verranno riprovati al prossimo lancio (non sono stati segnati come analizzati).");
+      await saveManifest();
+    }else{
+      log("↺ Niente di nuovo da analizzare: uso il promemoria.");
+    }
+
+    // 5) raccogli gli id gallerie di TUTTO il periodo
+    var idSet={},ids2=[];
+    for(var q=0;q<dayList.length;q++){
+      var arr=S.stato.scannedDays[keyOf(dayList[q])]||[];
+      for(var z=0;z<arr.length;z++){ if(!idSet[arr[z]]){idSet[arr[z]]=1;ids2.push(arr[z]);} }
+    }
+    log("✓ "+ids2.length+" attività con foto nel periodo.");
+    if(ids2.length===0){ log("Nessuna foto trovata."); await saveManifest(); finish("done"); return; }
+
+    // 6) DOWNLOAD
+    log("⬇ Scarico le foto…");
+    prog("Attività completate",0,ids2.length,null);
+    var t1=Date.now();
+    await pool(ids2,CONC.download,async function(id){ await grabActivity(id); },function(done,tot){
+      var avg=(Date.now()-t1)/done, etaMs=avg*(tot-done);
+      prog("Attività completate",done,tot,etaMs);
+    });
+    await saveManifest();
+
+    // 7) ZIP finale
+    if(!S.fsaDir && S.total>0){
+      log("📦 Preparo il file ZIP…");
+      var blob=await S.zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:1}},function(meta){ setBtn("ZIP "+Math.round(meta.percent)+"%"); });
+      var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+      a.download="foto-scuola-"+keyOf(new Date())+".zip"; a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},5000);
+      log("✓ ZIP scaricato nella cartella Download.");
+    }
+
+    log("");
+    log("🎉 Fatto! "+S.total+" foto nuove salvate"+(S.skipped?", "+S.skipped+" già presenti saltate.":"."));
+    finish("done");
+  }
+
+  function finish(status){
+    // status: "done" (completato), "stopped" (fermato dal genitore), "error" (annullato/non disponibile)
+    S.running=false;
+    var btn=document.getElementById("_bcStop");
+    if(btn){
+      if(status==="done"){ btn.textContent="✓ Tutto fatto, chiudi"; btn.style.background="#0FB5A6"; btn.style.color="#fff"; }
+      else if(status==="stopped"){ btn.textContent="Fermato — chiudi"; }
+      else { btn.textContent="Chiudi e riprova"; }
+      btn.onclick=function(){ if(ROOT_EL) ROOT_EL.remove(); };
+    }
+    // fermiamo lo spinner e lo shimmer: il lavoro è finito, non deve sembrare ancora in corso
+    var spin=document.querySelector("#_bcProgLab .spinner"); if(spin) spin.outerHTML = status==="done" ? "✓ " : "⏹ ";
+    var shine=document.querySelector(".prog-track .shine"); if(shine) shine.style.display="none";
+  }
+
+  // ── UI ───────────────────────────────────────────────────────────────────────
+  function el(html){var t=document.createElement("template");t.innerHTML=html.trim();if(t.content.childNodes.length>1){var w=document.createElement("div");w.appendChild(t.content);return w;}return t.content.firstChild;}
+  function log(m){var e=document.getElementById("_bcLog");if(!e)return;var d=document.createElement("div");d.textContent=m;e.appendChild(d);e.scrollTop=e.scrollHeight;}
+  function setCount(){var e=document.getElementById("_bcCount");if(e)e.textContent=S.total;var s=document.getElementById("_bcSkip");if(s)s.textContent=S.skipped;}
+  function setBtn(t){var b=document.getElementById("_bcStop");if(b)b.textContent=t;}
+  function prog(label,cur,tot,etaMs){
+    var box=document.getElementById("_bcProg"),bar=document.getElementById("_bcBar"),lab=document.getElementById("_bcProgLab");
+    if(!bar)return; box.style.display="block";
+    bar.style.width=(tot?Math.round(cur/tot*100):0)+"%";
+    var eta="";
+    if(etaMs && isFinite(etaMs) && cur<tot){ var m=Math.ceil(etaMs/60000); eta=" · ~"+(m<=1?"meno di 1 min":m+" min")+" rimasti"; }
+    lab.innerHTML='<span class="spinner"></span>'+escapeHtml(label+" "+cur+"/"+tot+eta);
+  }
+  function showPanel(which){
+    document.getElementById("_bcConfig").style.display=which==="config"?"block":"none";
+    document.getElementById("_bcRun").style.display=which==="progress"?"block":"none";
+  }
+
+  function schoolYearStart(){
+    var n=new Date(); var y=n.getMonth()>=8 ? n.getFullYear() : n.getFullYear()-1; // set = mese 8
+    return new Date(y,8,1);
+  }
+
+  // ── mini-calendario italiano (sostituisce il date-picker nativo, che segue la
+  // lingua/formato del sistema dell'utente e non quella della pagina) ───────────
+  var MESI_IT=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+  var GIORNI_IT=["Lu","Ma","Me","Gi","Ve","Sa","Do"];
+  function isoToIt(iso){ if(!iso) return ""; var p=iso.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
+  function makeDatePicker(inputId, calId){
+    var input=document.getElementById(inputId), cal=document.getElementById(calId);
+    var iso=null, minIso=null, maxIso=null, viewYear, viewMonth;
+    function setIso(newIso){ iso=newIso; input.value=isoToIt(iso); }
+    function setBounds(min,max){ minIso=min; maxIso=max; }
+    function render(){
+      var d=new Date(viewYear, viewMonth, 1);
+      var startDow=(d.getDay()+6)%7; // lunedì=0, come da convenzione italiana
+      var daysInMonth=new Date(viewYear, viewMonth+1, 0).getDate();
+      var ym=viewYear*12+viewMonth;
+      var minYm = minIso ? (+minIso.slice(0,4))*12+(+minIso.slice(5,7)-1) : null;
+      var maxYm = maxIso ? (+maxIso.slice(0,4))*12+(+maxIso.slice(5,7)-1) : null;
+      var prevDisabled = minYm!==null && ym<=minYm;
+      var nextDisabled = maxYm!==null && ym>=maxYm;
+      var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+        '<button type="button" class="_bcCalPrev" '+(prevDisabled?"disabled":"")+' style="background:none;border:none;cursor:'+(prevDisabled?"default":"pointer")+';font-size:1.1rem;color:'+(prevDisabled?"#D8D3EA":"#5B5470")+';padding:2px 8px">‹</button>'+
+        '<div style="font-weight:700;font-size:.85rem;color:#241C3B">'+MESI_IT[viewMonth]+' '+viewYear+'</div>'+
+        '<button type="button" class="_bcCalNext" '+(nextDisabled?"disabled":"")+' style="background:none;border:none;cursor:'+(nextDisabled?"default":"pointer")+';font-size:1.1rem;color:'+(nextDisabled?"#D8D3EA":"#5B5470")+';padding:2px 8px">›</button>'+
+        '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:.7rem;color:#8B80AE;text-align:center;margin-bottom:2px">';
+      GIORNI_IT.forEach(function(g){ html+='<div>'+g+'</div>'; });
+      html+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">';
+      for(var i=0;i<startDow;i++) html+='<div></div>';
+      for(var dd=1;dd<=daysInMonth;dd++){
+        var thisIso=viewYear+"-"+pad(viewMonth+1)+"-"+pad(dd);
+        var disabled=(minIso&&thisIso<minIso)||(maxIso&&thisIso>maxIso);
+        var isSel=thisIso===iso;
+        html+='<button type="button" data-iso="'+thisIso+'" '+(disabled?"disabled":"")+' style="padding:5px 0;border:none;border-radius:6px;cursor:'+(disabled?"default":"pointer")+';background:'+(isSel?"#FF3D77":"transparent")+';color:'+(disabled?"#D8D3EA":(isSel?"#fff":"#241C3B"))+';font-size:.8rem">'+dd+'</button>';
+      }
+      html+='</div>';
+      cal.innerHTML=html;
+      cal.querySelector("._bcCalPrev").onclick=function(e){ e.stopPropagation(); if(prevDisabled) return; viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} render(); };
+      cal.querySelector("._bcCalNext").onclick=function(e){ e.stopPropagation(); if(nextDisabled) return; viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} render(); };
+      [].slice.call(cal.querySelectorAll("button[data-iso]")).forEach(function(btn){
+        if(btn.disabled) return;
+        btn.onclick=function(e){ e.stopPropagation(); setIso(this.getAttribute("data-iso")); cal.style.display="none"; };
+      });
+    }
+    input.onclick=function(e){
+      e.stopPropagation();
+      var base=iso||minIso||keyOf(new Date()), p=base.split("-");
+      viewYear=+p[0]; viewMonth=+p[1]-1;
+      render();
+      cal.style.display = cal.style.display==="block" ? "none" : "block";
+    };
+    document.addEventListener("click", function(e){
+      if(cal.style.display==="block" && !cal.contains(e.target) && e.target!==input) cal.style.display="none";
+    });
+    return { setIso:setIso, setBounds:setBounds, getIso:function(){return iso;}, getMin:function(){return minIso;}, getMax:function(){return maxIso;} };
+  }
+
+  function buildUI(){
+    var root=el('<div id="_bcRoot" style="position:fixed;inset:0;background:rgba(30,15,45,.62);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif"></div>');
+    var card=el('<div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:94%;max-height:92vh;overflow:auto;box-shadow:0 30px 70px rgba(0,0,0,.4)"></div>');
+    card.appendChild(el('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span style="font-size:1.12rem;font-weight:800;color:#241C3B">📸 Scarica foto scuola <span style="font-size:.68rem;font-weight:700;color:#B4A9CC;vertical-align:middle">v'+BM_VERSION+'</span></span><button id="_bcX" style="background:none;border:none;font-size:1.6rem;line-height:1;color:#B4A9CC;cursor:pointer">×</button></div>'));
+
+    var sd=schoolYearStart(), td=new Date();
+    var config=el('<div id="_bcConfig"></div>');
+    config.appendChild(el('<div id="_bcWho" style="font-size:.9rem;color:#5B5470;margin-bottom:16px"></div>'));
+    config.appendChild(el(
+      '<div id="_bcDates" style="display:none">'+
+      '<label style="display:block;font-size:.8rem;font-weight:700;color:#241C3B;margin-bottom:6px">DA</label>'+
+      '<div style="position:relative;margin-bottom:14px">'+
+      '<input id="_bcFrom" type="text" readonly placeholder="gg/mm/aaaa" style="width:100%;padding:11px;border:1px solid #E7E3F3;border-radius:11px;font-size:1rem;cursor:pointer;background:#fff;caret-color:transparent">'+
+      '<div id="_bcFromCal" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid #E7E3F3;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:10px;margin-top:4px;width:230px"></div>'+
+      '</div>'+
+      '<label style="display:block;font-size:.8rem;font-weight:700;color:#241C3B;margin-bottom:6px">A</label>'+
+      '<div style="position:relative;margin-bottom:4px">'+
+      '<input id="_bcTo" type="text" readonly placeholder="gg/mm/aaaa" style="width:100%;padding:11px;border:1px solid #E7E3F3;border-radius:11px;font-size:1rem;cursor:pointer;background:#fff;caret-color:transparent">'+
+      '<div id="_bcToCal" style="display:none;position:absolute;z-index:20;background:#fff;border:1px solid #E7E3F3;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:10px;margin-top:4px;width:230px"></div>'+
+      '</div>'+
+      '</div>'
+    ));
+    config.appendChild(el('<p style="font-size:.78rem;color:#8B80AE;background:#F7F5FD;border-radius:9px;padding:8px 10px;margin-bottom:10px">📁 Al passo dopo ti verrà chiesto di scegliere una cartella: scegline una <b>vuota</b>, dedicata solo a queste foto. Lo strumento leggerà e scriverà <b>solo lì dentro</b>, mai altrove sul tuo computer.</p>'));
+    config.appendChild(el('<button id="_bcGo" style="width:100%;background:linear-gradient(120deg,#FF7A59,#FF3D77);color:#fff;border:none;border-radius:12px;padding:14px;font-size:1rem;font-weight:700;cursor:pointer">Scegli cartella e avvia</button>'));
+    config.appendChild(el('<p style="margin-top:11px;font-size:.78rem;color:#B4A9CC;text-align:center">Tutto in locale nel tuo browser. La prima scansione di un anno può durare qualche minuto.</p>'));
+    card.appendChild(config);
+
+    var run=el('<div id="_bcRun" style="display:none"></div>');
+    run.appendChild(el('<div id="_bcLog" style="background:#F7F5FD;border-radius:11px;padding:11px 13px;height:170px;overflow:auto;font-size:12px;color:#3B3550;font-family:ui-monospace,monospace;line-height:1.7;margin-bottom:14px"></div>'));
+    run.appendChild(el(
+      '<div style="display:flex;gap:10px;margin-bottom:14px">'+
+      '<div style="flex:1;background:#FFF0F4;border-radius:12px;padding:10px 14px"><div style="font-size:10px;font-weight:700;color:#FF3D77;letter-spacing:.05em">FOTO SALVATE</div><div id="_bcCount" style="font-size:1.7rem;font-weight:900;color:#C4145A;line-height:1.1">0</div></div>'+
+      '<div style="flex:1;background:#F3F1FB;border-radius:12px;padding:10px 14px"><div style="font-size:10px;font-weight:700;color:#7A6FA8;letter-spacing:.05em">GIÀ PRESENTI</div><div id="_bcSkip" style="font-size:1.7rem;font-weight:900;color:#5B4B9E;line-height:1.1">0</div></div>'+
+      '</div>'
+    ));
+    run.appendChild(el('<div id="_bcProg" style="display:none;margin-bottom:14px"><div id="_bcProgLab" style="font-size:11px;color:#8B80AE;margin-bottom:5px"><span class="spinner"></span>—</div><div class="prog-track"><div class="shine"></div><div id="_bcBar" style="background:linear-gradient(90deg,#FF7A59,#FF3D77);height:9px;border-radius:99px;width:0%;transition:width .3s;position:relative;z-index:1"></div></div></div>'));
+    run.appendChild(el('<button id="_bcStop" style="width:100%;background:#F3F1FB;color:#5B4B9E;border:none;border-radius:11px;padding:12px;font-size:.95rem;font-weight:700;cursor:pointer">Ferma</button>'));
+    run.appendChild(el('<button id="_bcCopyLog" style="width:100%;background:#fff;color:#5B4B9E;border:1px solid #E7E3F3;border-radius:11px;padding:9px;font-size:.82rem;font-weight:700;cursor:pointer;margin-top:8px">📋 Copia il registro (se qualcosa non ha funzionato)</button>'));
+    card.appendChild(run);
+
+    ROOT_EL=root;
+    root.appendChild(card); document.body.appendChild(root);
+
+    S.fromPicker=makeDatePicker("_bcFrom","_bcFromCal");
+    S.toPicker=makeDatePicker("_bcTo","_bcToCal");
+    S.fromPicker.setIso(keyOf(sd));
+    S.toPicker.setIso(keyOf(td));
+
+    document.getElementById("_bcX").onclick=function(){ S.stop=true; root.remove(); };
+    document.getElementById("_bcStop").onclick=function(){ S.stop=true; log("⏹ Interrotto. Il già scaricato resta salvato."); finish("stopped"); };
+    document.getElementById("_bcCopyLog").onclick=function(){
+      var lines=[].slice.call(document.getElementById("_bcLog").children).map(function(d){return d.textContent;});
+      var header="Registro Scarica Foto Scuola — "+new Date().toLocaleString("it-IT");
+      var text=header+"\n"+lines.join("\n");
+      var btn=document.getElementById("_bcCopyLog"), orig=btn.textContent;
+      navigator.clipboard.writeText(text).then(function(){
+        btn.textContent="✓ Copiato! Incollalo in un messaggio";
+        setTimeout(function(){btn.textContent=orig;},2500);
+      }).catch(function(){
+        alert("Non sono riuscito a copiare da solo. Seleziona a mano il testo del registro qui sopra e copialo.");
+      });
+    };
+    document.getElementById("_bcGo").onclick=function(){
+      var b=this; b.disabled=true; b.style.opacity=".5";
+      var fromIso=S.fromPicker.getIso(), toIso=S.toPicker.getIso();
+      var from=fromIso?new Date(fromIso+"T00:00:00"):null;
+      var to=toIso?new Date(toIso+"T23:59:59"):null;
+      if(!from||!to||isNaN(from)||isNaN(to)||from>to){ alert("Controlla le date: 'da' dev'essere prima di 'a'."); b.disabled=false; b.style.opacity="1"; return; }
+      var min=S.fromPicker.getMin(), max=S.toPicker.getMax();
+      if((min && fromIso<min) || (max && toIso>max)){
+        alert("Le date devono restare dentro l'anno scolastico scelto ("+isoToIt(min)+" — "+isoToIt(max)+")."); b.disabled=false; b.style.opacity="1"; return;
+      }
+      if(!window.showDirectoryPicker){
+        var d0=new Date(from), feriali=0;
+        while(d0<=to){ var wd=d0.getDay(); if(wd!==0&&wd!==6) feriali++; d0.setDate(d0.getDate()+1); }
+        if(feriali>ZIP_MAX_WEEKDAYS){
+          alert("Il tuo browser non salva direttamente in cartella: in modalità ZIP, per non rischiare di sovraccaricare la memoria, il periodo scelto ("+feriali+" giorni feriali) è troppo lungo. Scegli al massimo "+ZIP_MAX_WEEKDAYS+" giorni feriali (circa 8 settimane), oppure usa Chrome o Edge per periodi più lunghi.");
+          b.disabled=false; b.style.opacity="1"; return;
+        }
+      }
+      start({from:from,to:to});
+    };
+  }
+
+  // ── init ─────────────────────────────────────────────────────────────────────
+  // imposta i campi data (min/max/valori) in base all'anno scolastico scelto
+  function applyYearToDatePickers(yearEntry){
+    var b=yearBounds(yearEntry && yearEntry.anno);
+    if(!b || !S.fromPicker || !S.toPicker) return;
+    S.fromPicker.setBounds(b.min,b.max);
+    S.toPicker.setBounds(b.min,b.max);
+    var today=keyOf(new Date());
+    S.fromPicker.setIso(b.min);
+    S.toPicker.setIso(yearEntry.isCurrent ? (today<b.max?today:b.max) : b.max);
+  }
+
+  function renderWho(res){
+    var who=document.getElementById("_bcWho");
+    var persons=res.persons||[];
+
+    // ogni combinazione bambino+anno è già una coppia valida (viene dai dati reali:
+    // un fratello non iscritto in un certo anno semplicemente non ha quella voce).
+    // Un'unica scelta combinata evita quindi ogni problema di dipendenza tra le due select.
+    var combos=[];
+    persons.forEach(function(p){
+      p.years.forEach(function(y){
+        combos.push({ id:y.id, label: p.name+" — "+(y.anno||"?")+(y.isCurrent?" (in corso)":""), year:y });
+      });
+    });
+    combos.sort(function(a,b){
+      var ay=a.year.anno||"", by=b.year.anno||"";
+      return a.label.split(" — ")[0].localeCompare(b.label.split(" — ")[0]) || by.localeCompare(ay);
+    });
+    var personCount={};
+    combos.forEach(function(c){ personCount[c.label.split(" — ")[0]]=1; });
+    var multiPerson=Object.keys(personCount).length>1;
+
+    function applyCombo(id){
+      var c=null;
+      for(var i=0;i<combos.length;i++) if(combos[i].id===id) c=combos[i];
+      if(!c) c=combos[0];
+      S.childId=c.id;
+      applyYearToDatePickers(c.year);
+      var datesEl=document.getElementById("_bcDates"); if(datesEl) datesEl.style.display="block";
+    }
+
+    if(combos.length>=1){
+      var opts=combos.map(function(c){
+        return '<option value="'+c.id+'"'+(c.id===res.id?" selected":"")+'>'+escapeHtml(c.label)+'</option>';
+      }).join("");
+      var intro = combos.length>1
+        ? (multiPerson ? "Ho trovato più bambini nel tuo account. Scegli chi e quale anno:" : "Scegli il bambino e l\u2019anno scolastico:")
+        : "Bambino riconosciuto. Scegli il periodo:";
+      who.innerHTML =
+        '<div style="margin-bottom:8px">'+intro+'</div>'+
+        '<select id="_bcCombo" style="width:100%;padding:9px;border:1px solid #E7E3F3;border-radius:10px;font-size:.95rem;margin-bottom:8px">'+opts+'</select>'+
+        (multiPerson ? '<div style="background:#FFFBF2;border:1px solid #F5D48A;border-radius:10px;padding:8px 10px;font-size:.8rem;color:#7A6A2E">Non ho ancora potuto testare questo strumento con più di un bambino nello stesso account: dovrebbe funzionare, ma se qualcosa non torna scrivimi. — Simone</div>' : '');
+      applyCombo(res.id || combos[0].id);
+      document.getElementById("_bcCombo").onchange=function(){ applyCombo(this.value); };
+    }else if(res.id){
+      who.innerHTML = "Bambino riconosciuto. Scegli il periodo:";
+      var datesEl0=document.getElementById("_bcDates"); if(datesEl0) datesEl0.style.display="block";
+    }else{
+      who.innerHTML='<div style="background:#FFFBF2;border:1px solid #F5D48A;border-radius:10px;padding:10px 12px;margin-bottom:4px">Non riesco a riconoscere il bambino automaticamente. Prova ad aprire <b>\u201cReport Giornaliero\u201d</b> dal menu a sinistra e clicca di nuovo questo preferito.<br><br>Se il problema continua, chiedi alla scuola il codice del bambino su BabyConnect e scrivilo qui sotto:</div><input id="_bcCid" placeholder="es. 5583" style="width:100%;padding:10px;border:1px solid #E7E3F3;border-radius:10px;margin-top:8px">';
+      setTimeout(function(){var i=document.getElementById("_bcCid");if(i)i.oninput=function(){
+        S.childId=this.value.replace(/\D/g,"")||null;
+        var datesEl=document.getElementById("_bcDates");
+        if(datesEl) datesEl.style.display = S.childId ? "block" : "none";
+      };},0);
+    }
+  }
+
+  async function init(){
+    if(!/(^|\.)babyconnect\.it$/i.test(location.hostname)){
+      alert("Apri prima il sito della scuola (app.babyconnect.it), fai accesso, poi clicca di nuovo questo pulsante.");
+      return;
+    }
+
+    var status=await checkKillSwitch();
+    if(!status.enabled){
+      showPausedScreen(status.message || "Per il momento lo strumento è disattivato (es. per non sovraccaricare il sito della scuola). Riprova più tardi, o scrivi a Simone se il problema persiste.");
+      return;
+    }
+
+    buildUI();
+    if(!window.showDirectoryPicker){
+      var warn=document.createElement("div");
+      warn.style.cssText="background:#FFF3E0;border:1px solid #F5A524;border-radius:10px;padding:10px 12px;font-size:.82rem;color:#7A5B10;margin-bottom:14px";
+      warn.innerHTML="⚠ <b>Il tuo browser non supporta il salvataggio diretto in cartella.</b> Riceverai tutte le foto in un unico file ZIP da estrarre, e ogni volta si ripartirà da capo (niente scaricamento solo delle novità). Per non rischiare di sovraccaricare la memoria, in questa modalità il periodo scelto non potrà superare "+ZIP_MAX_WEEKDAYS+" giorni feriali (circa 8 settimane). Per l'esperienza completa, senza questo limite, usa <b>Chrome</b> o <b>Edge</b> su computer.";
+      document.getElementById("_bcConfig").insertBefore(warn, document.getElementById("_bcWho"));
+    }
+    var who=document.getElementById("_bcWho");
+    var res;
+
+    if(window.__bcChildCache && window.__bcChildCache.id){
+      // già riconosciuto in un lancio precedente in questa stessa pagina: non rifacciamo l'attesa
+      res=window.__bcChildCache;
+    }else{
+      var secs=60;
+      var setWait=function(){
+        who.innerHTML = secs>0
+          ? "🔎 Sto riconoscendo il bambino… il sito della scuola può metterci fino a un minuto ("+secs+"s), un attimo di pazienza."
+          : "🔎 Ci sta mettendo più del previsto, ma sta ancora lavorando: qualche secondo in più di pazienza.";
+      };
+      setWait();
+      var countdown=setInterval(function(){ secs=Math.max(0,secs-1); setWait(); }, 1000);
+      res=await detectChildId();
+      clearInterval(countdown);
+      if(res.id) window.__bcChildCache=res;
+    }
+
+    S.childId=res.id;
+    renderWho(res);
+
+    log("⏳ Preparo gli strumenti…");
+    try{ await loadScript(CDN_PIEXIF); log("✓ Scrittura data nelle foto pronta."); }catch(e){ log("⚠ Data EXIF non disponibile (continuo lo stesso)."); }
+    if(!window.showDirectoryPicker){
+      try{ await loadScript(CDN_JSZIP); log("✓ Modalità ZIP pronta."); }catch(e){ log("⚠ ZIP non disponibile."); }
+    }
+  }
+
+  init();
+}
+
+// serializza il bookmarklet nell'href del pulsante (niente problemi di escaping)
+(function(){
+  var code="("+BOOKMARKLET.toString()+")();";
+  document.getElementById("bm").href="javascript:"+encodeURIComponent(code);
+  document.getElementById("bm").addEventListener("click", function(e){
+    e.preventDefault();
+    alert("Non cliccarlo: va TRASCINATO 🖐️\n\nTieni premuto il pulsante, trascinalo nella barra dei preferiti del browser (di solito appena sotto la barra degli indirizzi) e rilascialo lì. Da quel momento lo ritrovi sempre lì, pronto all'uso.");
+  });
+  // la versione mostrata in pagina viene letta dallo stesso codice del bookmarklet,
+  // così landing e pannello non possono mai disallinearsi per errore
+  var m=code.match(/BM_VERSION\s*=\s*"(\d+)"/);
+  var verEl=document.getElementById("_bcLandingVer");
+  if(verEl) verEl.textContent = m ? ("v"+m[1]) : "?";
+})();
+</script>
+</body>
+</html>
