@@ -48,7 +48,3 @@ documentati in [CLAUDE.md](CLAUDE.md).
 
 GitHub Pages, pubblicazione automatica ad ogni push su `master` (vedi sezione
 Infrastruttura in [CLAUDE.md](CLAUDE.md)).
-
-## Autore
-
-Simone Conti — papà di Sole, iscritta a Il Casello dei Piccoli.

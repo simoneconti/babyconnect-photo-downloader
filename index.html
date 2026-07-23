@@ -155,6 +155,15 @@
   <div class="card">
     <h3>🔒 Resta tutto sul tuo computer</h3>
     <p>Le foto vengono prese usando l’accesso che hai già fatto tu e salvate direttamente sul tuo computer, solo dentro la cartella che scegli tu. Non passano da nessun sito esterno, non viene inviato niente a terzi, non serve installare nulla né creare account.</p>
+    <p style="margin-top:10px">Non c’è nessun server dietro le quinte, nemmeno mio: lo strumento è solo codice che gira dentro il tuo browser. Io non vedo le tue credenziali, non vedo le foto dei tuoi figli e non ho modo di sapere chi lo sta usando o quando.</p>
+  </div>
+
+  <div class="card tint">
+    <h3>🔍 Puoi controllare tu stesso cosa fa davvero</h3>
+    <p>Capisco benissimo la diffidenza: si tratta dei tuoi figli, ha senso non fidarsi sulla parola. Per questo <strong>tutto il codice sorgente è pubblico</strong>, riga per riga, esattamente lo stesso che trascini nei preferiti — nessuna versione “segreta” diversa da quella che chiunque può leggere.</p>
+    <p style="margin-top:10px">Se conosci qualcuno che sa programmare (o vuoi provarci tu), può leggerlo su GitHub e verificare con i propri occhi che non invia nulla a nessun server se non a BabyConnect stesso:</p>
+    <a href="https://github.com/simoneconti/babyconnect-photo-downloader" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:#241C3B;color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;font-size:.92rem;text-decoration:none">🐙 Vedi il codice su GitHub</a>
+    <p style="margin-top:10px">È anche libero: chi vuole può copiarlo (“fare un fork”) e modificarlo come preferisce, senza chiedere il permesso a me.</p>
   </div>
 
   <section class="faq">
@@ -191,6 +200,12 @@
     </details>
 
     <details>
+      <summary>Potresti vedere le foto o i dati dei miei figli?</summary>
+      <p>No. Lo strumento non è un sito o un servizio a cui ti colleghi: è un <strong>bookmarklet</strong>, cioè un pezzetto di codice che, una volta trascinato nei preferiti, gira <strong>dentro il tuo browser</strong>, sul tuo computer, quando lo clicchi tu. Parla solo con <code>app.babyconnect.it</code> (per scaricare le foto, usando l’accesso che hai già fatto) e con la pagina che stai leggendo ora (solo per un controllo automatico “sei sulla versione più recente?”, senza mandare nessun dato tuo o dei tuoi figli). Non esiste un server mio nel mezzo: le foto vanno dritte da BabyConnect al tuo computer, senza passare da me.</p>
+      <p style="margin-top:10px">Se preferisci non fidarti sulla parola, va benissimo: <a href="https://github.com/simoneconti/babyconnect-photo-downloader" target="_blank" rel="noopener" style="color:var(--pink);font-weight:700;text-decoration:underline">il codice è tutto pubblico su GitHub ↗</a>, chiunque sappia leggere JavaScript può verificarlo riga per riga (o farsi aiutare da un conoscente più smanettone). È anche libero: si può copiare e modificare a piacimento.</p>
+    </details>
+
+    <details>
       <summary>Qualcosa non ha funzionato, come lo segnalo?</summary>
       <p>Nel pannello, durante o dopo il download, c’è un bottone <strong>“📋 Copia il registro”</strong>: copia tutto quello che è successo. Incollalo in un messaggio a chi ti ha condiviso questo strumento (o a Simone, vedi in cima alla pagina), così è più facile capire cosa è andato storto.</p>
     </details>
@@ -207,7 +222,7 @@
 
 </main>
 
-<footer>Strumento gratuito per genitori · nessun account, nessuna installazione, nessun dato inviato all’esterno</footer>
+<footer>Strumento gratuito per genitori · nessun account, nessuna installazione, nessun dato inviato all’esterno · <a href="https://github.com/simoneconti/babyconnect-photo-downloader" target="_blank" rel="noopener" style="color:#B4A9CC;text-decoration:underline">codice sorgente su GitHub ↗</a></footer>
 
 <script>
 // ════════════════════════════════════════════════════════════════════════════
